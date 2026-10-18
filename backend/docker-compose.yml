@@ -1,0 +1,11 @@
+services:
+  backend:
+    build: .
+    container_name: prediksi_kelulusan_api
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./app:/app/app
+    restart: unless-stopped
+    environment:
+      - PYTHONUNBUFFERED=1
