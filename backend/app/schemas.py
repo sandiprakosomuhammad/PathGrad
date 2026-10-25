@@ -1,11 +1,19 @@
 from pydantic import BaseModel, Field, field_validator, model_validator
-from typing import List
+from typing import List, Optional
 
 
 class StudentPredictionRequest(BaseModel):
     kode_anonim: str = Field(
         default="MHS-ANON",
         description="Kode pencatatan anonim tanpa nama/NIM asli"
+    )
+    nim: Optional[str] = Field(
+        default=None,
+        description="NIM mahasiswa (opsional, otomatis diisi jika kosong saat simpan)"
+    )
+    simpan_riwayat: bool = Field(
+        default=False,
+        description="Apakah hasil skrining disimpan ke database SQLite"
     )
     ips_sem1: float = Field(
         ...,
@@ -81,8 +89,39 @@ class StudentPredictionRequest(BaseModel):
 
 class PredictionResponse(BaseModel):
     kode_anonim: str = "MHS-ANON"
+    kode_mhs: str = "MHS-ANON"
+    nim: str = "-"
     risk_level: str          # "Indikasi Risiko Tinggi", "Indikasi Risiko Sedang", "Indikasi Risiko Rendah"
-    risk_percentage: float   # e.g. 78.5
-    prediction_label: str    # "Indikasi Berisiko Terlambat", "Indikasi Perlu Perhatian", "Indikasi Sesuai Jalur (Aman)"
-    top_factors: List[str]
-    recommendations: List[str]
+    risk_percentage: float   # e.g. 78.5 (tetap ada untuk uji fungsional & konsistensi)
+    persentase_bulat: int    # e.g. 79 (pembulatan terdekat integer)
+    prediction_label: str    # "Indikasi Berisiko Terlambat", "Indikasi Perlu Perhatian", "Indikasi Risiko Rendah"
+    penyebab_utama: str      # Ringkasan pemicu risiko
+    faktor_pemicu: List[str] # Observasi data faktual
+    top_factors: List[str] = Field(default_factory=list) # Kompatibilitas mundur
+    recommendations: List[str] = Field(default_factory=list) # Dikosongkan sesuai aturan Dosen PA
+
+
+class HistoryRecordItem(BaseModel):
+    id: int
+    kode_mhs: str
+    nim: str
+    ips_sem1: float
+    matkul_diambil_sem1: int
+    matkul_lulus_sem1: int
+    ips_sem2: float
+    matkul_diambil_sem2: int
+    matkul_lulus_sem2: int
+    ukt_lancar: int
+    persentase_bulat: int
+    kategori_risiko: str
+    penyebab_utama: str
+    faktor_pemicu: List[str]
+    created_at: str
+
+
+class HistoryResponse(BaseModel):
+    total_mahasiswa: int
+    total_rendah: int
+    total_sedang: int
+    total_tinggi: int
+    records: List[HistoryRecordItem]

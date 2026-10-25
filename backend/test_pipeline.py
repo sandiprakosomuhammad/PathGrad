@@ -7,7 +7,8 @@ import numpy as np
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from app.schemas import StudentPredictionRequest, PredictionResponse
-from app.ml_model import make_features, evaluate_student, load_model
+from app.ml_model import make_features, evaluate_student, evaluate_core, load_model
+from app.database import init_db, get_all_history, insert_record, get_next_student_identity, DB_PATH
 
 def run_tests():
     print("=" * 60)
@@ -37,7 +38,6 @@ def run_tests():
     print(f"  [INFO] Output Columns ({len(df_feat.columns)} features): {list(df_feat.columns)}")
     assert len(df_feat.columns) == 13, f"Expected 13 features, got {len(df_feat.columns)}"
     
-    # Verifikasi rumus fitur turunan
     assert df_feat['rata_rata_ips'].iloc[0] == 2.25, "Perhitungan rata_rata_ips salah"
     assert round(df_feat['tren_ips'].iloc[0], 2) == -0.50, "Perhitungan tren_ips salah"
     assert df_feat['matkul_gagal_sem1'].iloc[0] == 2, "Perhitungan matkul_gagal_sem1 salah"
@@ -99,12 +99,38 @@ def run_tests():
         print(f"  [OK] Validasi IPS > 4.0 berhasil ditolak: {e}")
 
     print("\n" + "=" * 60)
-    print("TEST 4: Evaluasi Inferensi Model & Istilah Etis 'Indikasi Risiko'")
+    print("TEST 4: Inisialisasi Database SQLite & Seeding 15 Data Training")
+    print("=" * 60)
+    # Hapus file db lama jika ingin fresh test
+    if os.path.exists(DB_PATH):
+        try:
+            os.remove(DB_PATH)
+        except Exception:
+            pass
+
+    init_db(ml_evaluator=evaluate_core)
+    history = get_all_history()
+    print(f"  [INFO] Total mahasiswa di SQLite : {history['total_mahasiswa']}")
+    print(f"  [INFO] Indikasi Risiko Rendah     : {history['total_rendah']}")
+    print(f"  [INFO] Indikasi Risiko Sedang     : {history['total_sedang']}")
+    print(f"  [INFO] Indikasi Risiko Tinggi     : {history['total_tinggi']}")
+    assert history['total_mahasiswa'] == 15, f"Expected 15 records, got {history['total_mahasiswa']}"
+    assert history['total_rendah'] == 5, f"Expected 5 rendah, got {history['total_rendah']}"
+    assert history['total_sedang'] == 5, f"Expected 5 sedang, got {history['total_sedang']}"
+    assert history['total_tinggi'] == 5, f"Expected 5 tinggi, got {history['total_tinggi']}"
+    assert history['records'][0]['kode_mhs'] == "MHS-001", "Expected MHS-001 on first row"
+    assert history['records'][0]['nim'] == "2401001", "Expected 2401001 on first row"
+    assert history['records'][14]['kode_mhs'] == "MHS-015", "Expected MHS-015 on row 15"
+    assert history['records'][14]['nim'] == "2401015", "Expected 2401015 on row 15"
+    print("  [OK] Seeding 15 data awal seimbang (5-5-5) berhasil 100%!")
+
+    print("\n" + "=" * 60)
+    print("TEST 5: Evaluasi Inferensi Model Dosen PA (Faktor Pemicu & Tanpa Rekomendasi)")
     print("=" * 60)
 
-    # 4a. Kasus Mahasiswa Berisiko (Red Flag)
     req_risk = StudentPredictionRequest(
         kode_anonim="MHS-2021-042",
+        nim="2410511042",
         ips_sem1=2.10,
         matkul_diambil_sem1=7,
         matkul_lulus_sem1=3,
@@ -115,36 +141,15 @@ def run_tests():
     )
     res_risk = evaluate_student(req_risk)
     print(f"  [Hasil Risiko Tinggi]:")
-    print(f"    - Kode: {res_risk.kode_anonim}")
     print(f"    - Risk Level: {res_risk.risk_level}")
-    print(f"    - Risk Percentage: {res_risk.risk_percentage}%")
-    print(f"    - Label: {res_risk.prediction_label}")
-    print(f"    - Top Factors: {res_risk.top_factors}")
-    print(f"    - Recommendations: {res_risk.recommendations}")
-    assert "Indikasi Risiko" in res_risk.risk_level, f"Expected 'Indikasi Risiko' in risk_level, got {res_risk.risk_level}"
-    assert len(res_risk.recommendations) > 0, "Recommendations should not be empty"
-
-    # 4b. Kasus Mahasiswa Tepat Waktu (Aman)
-    req_safe = StudentPredictionRequest(
-        kode_anonim="MHS-2021-099",
-        ips_sem1=3.60,
-        matkul_diambil_sem1=8,
-        matkul_lulus_sem1=8,
-        ips_sem2=3.75,
-        matkul_diambil_sem2=8,
-        matkul_lulus_sem2=8,
-        ukt_lancar=1,
-    )
-    res_safe = evaluate_student(req_safe)
-    print(f"\n  [Hasil Risiko Rendah]:")
-    print(f"    - Kode: {res_safe.kode_anonim}")
-    print(f"    - Risk Level: {res_safe.risk_level}")
-    print(f"    - Risk Percentage: {res_safe.risk_percentage}%")
-    print(f"    - Label: {res_safe.prediction_label}")
-    print(f"    - Top Factors: {res_safe.top_factors}")
-    print(f"    - Recommendations: {res_safe.recommendations}")
-    assert "Indikasi Risiko" in res_safe.risk_level, f"Expected 'Indikasi Risiko' in risk_level, got {res_safe.risk_level}"
-    assert len(res_safe.recommendations) > 0, "Recommendations should not be empty"
+    print(f"    - Risk Percentage: {res_risk.risk_percentage}% (Bulat: {res_risk.persentase_bulat}%)")
+    print(f"    - Penyebab Utama: {res_risk.penyebab_utama}")
+    print(f"    - Faktor Pemicu (Observasi Data): {res_risk.faktor_pemicu}")
+    print(f"    - Rekomendasi (Dikosongkan): {res_risk.recommendations}")
+    assert "Indikasi Risiko" in res_risk.risk_level
+    assert res_risk.persentase_bulat >= 70
+    assert len(res_risk.faktor_pemicu) > 0
+    assert len(res_risk.recommendations) == 0, "Rekomendasi tindakan harus kosong untuk Dosen PA"
 
     print("\n" + "=" * 60)
     print("SEMUA PENGUJIAN OTOMATIS BACKEND BERHASIL 100%!")

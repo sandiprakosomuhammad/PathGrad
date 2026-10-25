@@ -1,0 +1,21 @@
+kasus,jenis,harapan,hasil,keluaran,lolos
+Masukan valid umum,Valid,200,200,Indikasi Risiko Tinggi (94.4%),Ya
+"IPS = 0,0 (batas bawah)",Batas,200,200,Indikasi Risiko Tinggi (94.7%),Ya
+"IPS = 4,0 (batas atas)",Batas,200,200,Indikasi Risiko Tinggi (91.4%),Ya
+Matkul diambil = 1 (batas bawah),Batas,200,200,Indikasi Risiko Tinggi (91.2%),Ya
+Matkul lulus = 0,Batas,200,200,Indikasi Risiko Tinggi (99.6%),Ya
+Matkul lulus = diambil,Batas,200,200,Indikasi Risiko Rendah (28.3%),Ya
+UKT menunggak (0),Valid,200,200,Indikasi Risiko Tinggi (98.8%),Ya
+"IPS sem 1 = 4,5 (di atas batas)",Tidak valid,422,422,,Ya
+"IPS sem 2 = -0,1 (negatif)",Tidak valid,422,422,,Ya
+Matkul diambil sem 1 = 0,Tidak valid,422,422,,Ya
+Matkul diambil sem 2 = 0,Tidak valid,422,422,,Ya
+Matkul lulus > diambil (sem 1),Tidak valid,422,422,,Ya
+Matkul lulus > diambil (sem 2),Tidak valid,422,422,,Ya
+Matkul lulus negatif,Tidak valid,422,422,,Ya
+UKT = 2 (di luar 0/1),Tidak valid,422,422,,Ya
+IPS bukan angka,Tidak valid,422,422,,Ya
+Field ips_sem1 hilang,Tidak valid,422,422,,Ya
+Field ukt_lancar hilang,Tidak valid,422,422,,Ya
+GET /,Endpoint,200,200,,Ya
+GET /api/health,Endpoint,200,200,,Ya

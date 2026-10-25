@@ -21,16 +21,16 @@ def make_features(df_input: pd.DataFrame) -> pd.DataFrame:
     """
     df_feat = df_input.copy()
 
-    df_feat['rata_rata_ips']    = (df_feat['ips_sem1'] + df_feat['ips_sem2']) / 2.0
-    df_feat['tren_ips']         = df_feat['ips_sem2'] - df_feat['ips_sem1']
+    df_feat['rata_rata_ips']     = (df_feat['ips_sem1'] + df_feat['ips_sem2']) / 2.0
+    df_feat['tren_ips']          = df_feat['ips_sem2'] - df_feat['ips_sem1']
     df_feat['matkul_gagal_sem1'] = df_feat['matkul_diambil_sem1'] - df_feat['matkul_lulus_sem1']
     df_feat['matkul_gagal_sem2'] = df_feat['matkul_diambil_sem2'] - df_feat['matkul_lulus_sem2']
-    df_feat['rasio_lulus_sem1'] = np.where(
+    df_feat['rasio_lulus_sem1']  = np.where(
         df_feat['matkul_diambil_sem1'] > 0,
         df_feat['matkul_lulus_sem1'] / df_feat['matkul_diambil_sem1'],
         0.0
     )
-    df_feat['rasio_lulus_sem2'] = np.where(
+    df_feat['rasio_lulus_sem2']  = np.where(
         df_feat['matkul_diambil_sem2'] > 0,
         df_feat['matkul_lulus_sem2'] / df_feat['matkul_diambil_sem2'],
         0.0
@@ -46,7 +46,7 @@ def make_features(df_input: pd.DataFrame) -> pd.DataFrame:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Load Model — hanya dari file .joblib yang sudah dilatih
+# Load Model — mendukung model langsung maupun bundel dictionary (.joblib)
 # ─────────────────────────────────────────────────────────────────────────────
 def load_model():
     if not os.path.exists(MODEL_PATH):
@@ -55,7 +55,10 @@ def load_model():
             "Pastikan file 'lightgbm_model.joblib' sudah ada di folder backend/app/."
         )
     print(f"[PathGrad] Memuat model LightGBM dari: {MODEL_PATH}")
-    return joblib.load(MODEL_PATH)
+    loaded_obj = joblib.load(MODEL_PATH)
+    if isinstance(loaded_obj, dict) and "model" in loaded_obj:
+        return loaded_obj["model"]
+    return loaded_obj
 
 
 # Inisialisasi model saat modul diimpor pertama kali
@@ -63,123 +66,159 @@ model_instance = load_model()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Inferensi & Analisis Faktor Risiko
+# Logika Evaluasi Inti (Faktor Pemicu Risiko & Penyebab Utama)
 # ─────────────────────────────────────────────────────────────────────────────
-def evaluate_student(data: StudentPredictionRequest) -> PredictionResponse:
+def evaluate_core(
+    ips_sem1: float,
+    matkul_diambil_sem1: int,
+    matkul_lulus_sem1: int,
+    ips_sem2: float,
+    matkul_diambil_sem2: int,
+    matkul_lulus_sem2: int,
+    ukt_lancar: int,
+    kode_mhs: str = "MHS-ANON",
+    nim: str = "-"
+) -> dict:
     global model_instance
     if model_instance is None:
         model_instance = load_model()
 
-    # Bangun DataFrame dari data input
     df_raw = pd.DataFrame([{
-        'ips_sem1':            data.ips_sem1,
-        'matkul_diambil_sem1': data.matkul_diambil_sem1,
-        'matkul_lulus_sem1':   data.matkul_lulus_sem1,
-        'ips_sem2':            data.ips_sem2,
-        'matkul_diambil_sem2': data.matkul_diambil_sem2,
-        'matkul_lulus_sem2':   data.matkul_lulus_sem2,
-        'ukt_lancar':          data.ukt_lancar,
+        'ips_sem1':            ips_sem1,
+        'matkul_diambil_sem1': matkul_diambil_sem1,
+        'matkul_lulus_sem1':   matkul_lulus_sem1,
+        'ips_sem2':            ips_sem2,
+        'matkul_diambil_sem2': matkul_diambil_sem2,
+        'matkul_lulus_sem2':   matkul_lulus_sem2,
+        'ukt_lancar':          ukt_lancar,
     }])
 
-    # Feature Engineering (sama persis dengan Colab)
     df_feat = make_features(df_raw)
 
-    # Inferensi LightGBM → probabilitas keterlambatan (Class 1)
-    proba         = model_instance.predict_proba(df_feat)[0]
+    proba          = model_instance.predict_proba(df_feat)[0]
     prob_terlambat = float(proba[1]) if len(proba) > 1 else float(proba[0])
-    risk_percentage = round(prob_terlambat * 100, 1)
+    risk_percentage  = round(prob_terlambat * 100, 1)
+    persentase_bulat = int(round(prob_terlambat * 100))
 
-    # Penentuan kategori risiko menggunakan istilah etis akademis
-    if risk_percentage >= 65.0:
+    BATAS_SEDANG, BATAS_TINGGI = 0.40, 0.70
+
+    if prob_terlambat >= BATAS_TINGGI:
         risk_level = "Indikasi Risiko Tinggi"
         label      = "Indikasi Berisiko Terlambat"
-    elif risk_percentage >= 35.0:
+    elif prob_terlambat >= BATAS_SEDANG:
         risk_level = "Indikasi Risiko Sedang"
         label      = "Indikasi Perlu Perhatian (Waspada)"
     else:
         risk_level = "Indikasi Risiko Rendah"
-        label      = "Indikasi Sesuai Jalur (Aman)"
+        label      = "Indikasi Risiko Rendah"
 
-    # ── Derivasi nilai fitur untuk analisis faktor ─────────────────────────
-    rata_rata_ips     = (data.ips_sem1 + data.ips_sem2) / 2.0
-    tren_ips          = data.ips_sem2 - data.ips_sem1
-    gagal_sem1        = data.matkul_diambil_sem1 - data.matkul_lulus_sem1
-    gagal_sem2        = data.matkul_diambil_sem2 - data.matkul_lulus_sem2
-    rasio_lulus_sem1  = data.matkul_lulus_sem1 / data.matkul_diambil_sem1
-    rasio_lulus_sem2  = data.matkul_lulus_sem2 / data.matkul_diambil_sem2
+    rata_rata_ips    = (ips_sem1 + ips_sem2) / 2.0
+    tren_ips         = ips_sem2 - ips_sem1
+    gagal_sem1       = matkul_diambil_sem1 - matkul_lulus_sem1
+    gagal_sem2       = matkul_diambil_sem2 - matkul_lulus_sem2
+    rasio_lulus_sem1 = matkul_lulus_sem1 / matkul_diambil_sem1
+    rasio_lulus_sem2 = matkul_lulus_sem2 / matkul_diambil_sem2
 
-    top_factors: list[str] = []
-    recommendations: list[str] = []
+    faktor_pemicu: list[str] = []
 
-    # IPS rata-rata rendah
+    # 1. Mata kuliah belum lulus Semester 2 (Faktor kontributor utama)
+    if gagal_sem2 >= 1 or rasio_lulus_sem2 < 0.85:
+        faktor_pemicu.append(
+            f"Terdapat {gagal_sem2} mata kuliah belum lulus di Semester 2 "
+            f"(rasio kelulusan: {rasio_lulus_sem2 * 100:.0f}%)"
+        )
+
+    # 2. Mata kuliah belum lulus Semester 1
+    if gagal_sem1 >= 1 or rasio_lulus_sem1 < 0.85:
+        faktor_pemicu.append(
+            f"Terdapat {gagal_sem1} mata kuliah belum lulus di Semester 1 "
+            f"(rasio kelulusan: {rasio_lulus_sem1 * 100:.0f}%)"
+        )
+
+    # 3. Status UKT menunggak
+    if ukt_lancar == 0:
+        faktor_pemicu.append(
+            "Status pembayaran UKT: Menunggak (berpotensi menghambat administrasi studi)"
+        )
+
+    # 4. IPS rata-rata tahun pertama rendah
     if rata_rata_ips < 2.75:
-        top_factors.append(
-            f"Rata-rata IPS dua semester rendah ({rata_rata_ips:.2f} < 2.75)"
-        )
-        recommendations.append(
-            "Tingkatkan IPS minimal 3.00 di semester berikutnya untuk memperbaiki "
-            "kecenderungan akademik."
+        faktor_pemicu.append(
+            f"Rata-rata IPS tahun pertama relatif rendah ({rata_rata_ips:.2f} < 2.75)"
         )
 
-    # Tren IPS menurun
+    # 5. Penurunan performa IPS
     if tren_ips < -0.3:
-        top_factors.append(
-            f"Tren IPS menurun dari Sem 1 ke Sem 2 (Δ = {tren_ips:+.2f})"
-        )
-        recommendations.append(
-            "Lakukan evaluasi metode belajar bersama Dosen Pembimbing Akademik "
-            "sebelum perwalian semester 3."
+        faktor_pemicu.append(
+            f"Tren IPS mengalami penurunan dari Semester 1 ke Semester 2 (Δ = {tren_ips:+.2f})"
         )
 
-    # Mata kuliah gagal Semester 1
-    if gagal_sem1 >= 2:
-        top_factors.append(
-            f"Terdapat {gagal_sem1} mata kuliah tidak lulus di Semester 1 "
-            f"(rasio lulus: {rasio_lulus_sem1 * 100:.0f}%)"
-        )
-        recommendations.append(
-            "Prioritaskan perbaikan mata kuliah Semester 1 melalui kelas ulang "
-            "atau Semester Pendek (SP)."
-        )
+    # Fallback jika tidak ada observasi negatif terpicu
+    if not faktor_pemicu:
+        if prob_terlambat >= BATAS_SEDANG:
+            faktor_pemicu.append(
+                "Pola kombinasi capaian nilai dan kelulusan mata kuliah menyerupai profil historis mahasiswa berisiko"
+            )
+        else:
+            faktor_pemicu.append(
+                f"Kinerja akademik tahun pertama relatif terkendali: rata-rata IPS {rata_rata_ips:.2f}, "
+                f"rasio lulus Sem 1 ({rasio_lulus_sem1 * 100:.0f}%), "
+                f"Sem 2 ({rasio_lulus_sem2 * 100:.0f}%)"
+            )
 
-    # Mata kuliah gagal Semester 2
-    if gagal_sem2 >= 2:
-        top_factors.append(
-            f"Terdapat {gagal_sem2} mata kuliah tidak lulus di Semester 2 "
-            f"(rasio lulus: {rasio_lulus_sem2 * 100:.0f}%)"
-        )
-        recommendations.append(
-            "Segera daftarkan diri ke kelas remedi atau SP untuk mata kuliah "
-            "yang gagal di Semester 2."
-        )
+    # Tentukan penyebab utama (teks ringkas untuk tampilan card tabel)
+    if gagal_sem2 >= 1:
+        penyebab_utama = f"{gagal_sem2} matkul belum lulus di Semester 2"
+    elif gagal_sem1 >= 1:
+        penyebab_utama = f"{gagal_sem1} matkul belum lulus di Semester 1"
+    elif ukt_lancar == 0:
+        penyebab_utama = "Status pembayaran UKT menunggak"
+    elif rata_rata_ips < 2.75:
+        penyebab_utama = f"Rata-rata IPS tahun pertama rendah ({rata_rata_ips:.2f})"
+    elif tren_ips < -0.3:
+        penyebab_utama = f"Tren IPS mengalami penurunan (Δ {tren_ips:+.2f})"
+    elif prob_terlambat < BATAS_SEDANG:
+        penyebab_utama = "Akademik stabil & mata kuliah tuntas"
+    else:
+        penyebab_utama = "Kombinasi pola performa akademik tahun pertama"
 
-    # UKT menunggak
-    if data.ukt_lancar == 0:
-        top_factors.append(
-            "Status pembayaran UKT: Menunggak (berpotensi hambat proses akademik)"
-        )
-        recommendations.append(
-            "Segera urus cicilan atau keringanan UKT ke Bagian Keuangan kampus "
-            "agar tidak terhambat dalam pengisian KRS."
-        )
+    return {
+        "kode_mhs": kode_mhs,
+        "nim": nim,
+        "risk_level": risk_level,
+        "kategori_risiko": risk_level,
+        "risk_percentage": risk_percentage,
+        "persentase_bulat": persentase_bulat,
+        "prediction_label": label,
+        "penyebab_utama": penyebab_utama,
+        "faktor_pemicu": faktor_pemicu,
+        "top_factors": faktor_pemicu,
+        "recommendations": []  # Ditiadakan sesuai tugas Dosen PA
+    }
 
-    # Tidak ada faktor kritis → mahasiswa aman
-    if not top_factors:
-        top_factors.append(
-            f"Kinerja akademik stabil: rata-rata IPS {rata_rata_ips:.2f}, "
-            f"rasio lulus Sem1 {rasio_lulus_sem1 * 100:.0f}%, "
-            f"Sem2 {rasio_lulus_sem2 * 100:.0f}%"
-        )
-        recommendations.append(
-            "Pertahankan konsistensi akademik dan mulai persiapkan topik "
-            "Tugas Akhir/Skripsi sejak dini."
-        )
 
+def evaluate_student(data: StudentPredictionRequest) -> PredictionResponse:
+    res = evaluate_core(
+        ips_sem1=data.ips_sem1,
+        matkul_diambil_sem1=data.matkul_diambil_sem1,
+        matkul_lulus_sem1=data.matkul_lulus_sem1,
+        ips_sem2=data.ips_sem2,
+        matkul_diambil_sem2=data.matkul_diambil_sem2,
+        matkul_lulus_sem2=data.matkul_lulus_sem2,
+        ukt_lancar=data.ukt_lancar,
+        kode_mhs=data.kode_anonim,
+        nim=data.nim or "-"
+    )
     return PredictionResponse(
         kode_anonim=data.kode_anonim,
-        risk_level=risk_level,
-        risk_percentage=risk_percentage,
-        prediction_label=label,
-        top_factors=top_factors,
-        recommendations=recommendations,
+        kode_mhs=res["kode_mhs"],
+        nim=res["nim"],
+        risk_level=res["risk_level"],
+        risk_percentage=res["risk_percentage"],
+        persentase_bulat=res["persentase_bulat"],
+        prediction_label=res["prediction_label"],
+        penyebab_utama=res["penyebab_utama"],
+        faktor_pemicu=res["faktor_pemicu"],
+        top_factors=res["top_factors"],
+        recommendations=[]
     )
