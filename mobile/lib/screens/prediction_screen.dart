@@ -238,7 +238,7 @@ class _PredictionScreenState extends State<PredictionScreen> {
       borderRadius: BorderRadius.circular(10),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
         decoration: BoxDecoration(
           color: isSelected ? activeColor.withValues(alpha: 0.1) : Colors.transparent,
           borderRadius: BorderRadius.circular(10),
@@ -252,16 +252,20 @@ class _PredictionScreenState extends State<PredictionScreen> {
           children: [
             Icon(
               isSelected ? Icons.radio_button_checked : Icons.radio_button_off,
-              size: 18,
+              size: 16,
               color: isSelected ? activeColor : Colors.grey,
             ),
-            const SizedBox(width: 8),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                color: isSelected ? activeColor : const Color(0xFF334155),
+            const SizedBox(width: 6),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 12.5,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: isSelected ? activeColor : const Color(0xFF334155),
+                ),
               ),
             ),
           ],
@@ -452,9 +456,11 @@ class _PredictionScreenState extends State<PredictionScreen> {
                       children: [
                         Icon(Icons.flash_on_rounded, size: 16, color: Color(0xFFD97706)),
                         SizedBox(width: 6),
-                        Text(
-                          'Isi Cepat Skenario Demo (Quick Preset)',
-                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                        Expanded(
+                          child: Text(
+                            'Isi Cepat Skenario Demo',
+                            style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                          ),
                         ),
                       ],
                     ),
@@ -529,7 +535,8 @@ class _PredictionScreenState extends State<PredictionScreen> {
                         decoration: const InputDecoration(
                           labelText: 'NIM Mahasiswa',
                           hintText: 'Masukkan NIM, misal: 2410511042',
-                          helperText: 'Otomatis di-generate jika dikosongkan',
+                          helperText: 'Otomatis dibuat jika dikosongkan',
+                          helperMaxLines: 2,
                           prefixIcon: Icon(Icons.badge_outlined, size: 20),
                         ),
                       ),
@@ -555,25 +562,27 @@ class _PredictionScreenState extends State<PredictionScreen> {
                             controller: _mkDiambilSem1Controller,
                             keyboardType: TextInputType.number,
                             decoration: const InputDecoration(
-                              labelText: 'Matkul Diambil',
+                              labelText: 'Diambil',
+                              labelStyle: TextStyle(fontSize: 12),
                               hintText: '≥ 1',
                               helperText: 'Bukan SKS',
-                              prefixIcon: Icon(Icons.book_outlined, size: 20),
+                              prefixIcon: Icon(Icons.book_outlined, size: 18),
                             ),
                             validator: (v) => _validateMatkul(v,
                                 label: 'Matkul diambil Sem 1', min: 1),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: TextFormField(
                             controller: _mkLulusSem1Controller,
                             keyboardType: TextInputType.number,
                             decoration: const InputDecoration(
-                              labelText: 'Matkul Lulus',
+                              labelText: 'Lulus',
+                              labelStyle: TextStyle(fontSize: 12),
                               hintText: '≥ 0',
                               helperText: 'Bukan SKS',
-                              prefixIcon: Icon(Icons.check_outlined, size: 20),
+                              prefixIcon: Icon(Icons.check_outlined, size: 18),
                             ),
                             validator: (v) => _validateMatkul(v,
                                 label: 'Matkul lulus Sem 1', min: 0),
@@ -624,25 +633,27 @@ class _PredictionScreenState extends State<PredictionScreen> {
                             controller: _mkDiambilSem2Controller,
                             keyboardType: TextInputType.number,
                             decoration: const InputDecoration(
-                              labelText: 'Matkul Diambil',
+                              labelText: 'Diambil',
+                              labelStyle: TextStyle(fontSize: 12),
                               hintText: '≥ 1',
                               helperText: 'Bukan SKS',
-                              prefixIcon: Icon(Icons.book_outlined, size: 20),
+                              prefixIcon: Icon(Icons.book_outlined, size: 18),
                             ),
                             validator: (v) => _validateMatkul(v,
                                 label: 'Matkul diambil Sem 2', min: 1),
                           ),
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         Expanded(
                           child: TextFormField(
                             controller: _mkLulusSem2Controller,
                             keyboardType: TextInputType.number,
                             decoration: const InputDecoration(
-                              labelText: 'Matkul Lulus',
+                              labelText: 'Lulus',
+                              labelStyle: TextStyle(fontSize: 12),
                               hintText: '≥ 0',
                               helperText: 'Bukan SKS',
-                              prefixIcon: Icon(Icons.check_outlined, size: 20),
+                              prefixIcon: Icon(Icons.check_outlined, size: 18),
                             ),
                             validator: (v) => _validateMatkul(v,
                                 label: 'Matkul lulus Sem 2', min: 0),
@@ -675,12 +686,12 @@ class _PredictionScreenState extends State<PredictionScreen> {
                       Row(children: [
                         Expanded(
                           child: _buildUktChoice(
-                            label: 'Lancar / Lunas',
+                            label: 'Lancar',
                             value: 1,
                             activeColor: const Color(0xFF1E40AF),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: _buildUktChoice(
                             label: 'Menunggak',
@@ -771,7 +782,7 @@ class _PredictionScreenState extends State<PredictionScreen> {
                         children: [
                           Expanded(
                             child: _buildRealtimeStatItem(
-                              label: 'Rasio Lulus Sem 1',
+                              label: 'Rasio Lulus S1',
                               value: '$_liveRasio1%',
                               sublabel: '$_liveGagal1 Matkul Gagal',
                               icon: Icons.assessment_outlined,
@@ -781,7 +792,7 @@ class _PredictionScreenState extends State<PredictionScreen> {
                           const SizedBox(width: 8),
                           Expanded(
                             child: _buildRealtimeStatItem(
-                              label: 'Rasio Lulus Sem 2',
+                              label: 'Rasio Lulus S2',
                               value: '$_liveRasio2%',
                               sublabel: '$_liveGagal2 Matkul Gagal',
                               icon: Icons.assessment_outlined,
@@ -892,9 +903,15 @@ class _PredictionScreenState extends State<PredictionScreen> {
             // Progress Bar Probabilitas (Angka Bulat)
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const Text('Probabilitas Risiko Keterlambatan:',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
+                const Expanded(
+                  child: Text(
+                    'Probabilitas Risiko Keterlambatan:',
+                    style: TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+                  ),
+                ),
+                const SizedBox(width: 8),
                 Text('${res.persentaseBulat}%',
                     style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: statusColor)),
               ],
@@ -937,8 +954,12 @@ class _PredictionScreenState extends State<PredictionScreen> {
             const Row(children: [
               Icon(Icons.rule_folder_outlined, size: 18, color: Color(0xFF1E40AF)),
               SizedBox(width: 6),
-              Text('Faktor Pemicu Risiko (Observasi Data):',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
+              Expanded(
+                child: Text(
+                  'Faktor Pemicu Risiko (Observasi Data):',
+                  style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
+                ),
+              ),
             ]),
             const SizedBox(height: 8),
             ...res.faktorPemicu.map((f) => Padding(

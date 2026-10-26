@@ -327,7 +327,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                           '${record.kodeMhs} • NIM: ${record.nim}',
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
-                            fontSize: 14,
+                            fontSize: 12.5,
                             color: Color(0xFF0F172A),
                           ),
                         ),
@@ -339,8 +339,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         const SizedBox(height: 3),
                         Text(
                           'Pemicu Utama: ${record.penyebabUtama}',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
+                          maxLines: 2,
+                          softWrap: true,
                           style: TextStyle(
                             fontSize: 11,
                             fontWeight: FontWeight.w600,

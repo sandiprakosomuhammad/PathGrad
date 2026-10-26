@@ -207,19 +207,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            'Sistem Skrining Dosen PA',
-                            style: TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600),
+                        Flexible(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            child: const Text(
+                              'Sistem Skrining Dosen PA',
+                              style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.w600),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                            ),
                           ),
                         ),
+                        const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                           decoration: BoxDecoration(
                             color: _isApiOnline == true
                                 ? Colors.green.withValues(alpha: 0.25)
@@ -233,13 +238,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               CircleAvatar(
-                                radius: 4,
+                                radius: 3.5,
                                 backgroundColor: _isApiOnline == true ? Colors.greenAccent : Colors.redAccent,
                               ),
-                              const SizedBox(width: 6),
+                              const SizedBox(width: 5),
                               Text(
                                 _isApiOnline == true ? 'API Online' : 'API Offline',
-                                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                                style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
                               ),
                             ],
                           ),
@@ -351,9 +356,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text(
-                    'Riwayat Skrining Terkini',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                  const Expanded(
+                    child: Text(
+                      'Riwayat Skrining Terkini',
+                      style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                    ),
                   ),
                   TextButton(
                     onPressed: widget.onNavigateToHistory,
@@ -750,7 +757,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         '${record.kodeMhs} • NIM: ${record.nim}',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                          fontSize: 12.5,
                           color: Color(0xFF0F172A),
                         ),
                       ),
@@ -762,8 +769,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       const SizedBox(height: 3),
                       Text(
                         'Pemicu Utama: ${record.penyebabUtama}',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                        maxLines: 2,
+                        softWrap: true,
                         style: const TextStyle(
                           fontSize: 11,
                           fontWeight: FontWeight.w600,
@@ -890,7 +897,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   children: [
                     Text(
                       '${record.kodeMhs} • NIM: ${record.nim}',
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12.5),
                     ),
                     const SizedBox(height: 2),
                     Text(
@@ -900,8 +907,8 @@ class _DashboardScreenState extends State<DashboardScreen> {
                     const SizedBox(height: 3),
                     Text(
                       'Pemicu Utama: ${record.penyebabUtama}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      maxLines: 2,
+                      softWrap: true,
                       style: TextStyle(fontSize: 11, fontWeight: FontWeight.w600, color: badgeColor),
                     ),
                   ],
