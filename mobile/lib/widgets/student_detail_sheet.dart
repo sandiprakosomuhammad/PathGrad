@@ -47,7 +47,7 @@ class StudentDetailSheet extends StatelessWidget {
         maxWidth: 430,
         maxHeight: MediaQuery.of(context).size.height * 0.9,
       ),
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+      padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
       decoration: const BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
@@ -81,7 +81,7 @@ class StudentDetailSheet extends StatelessWidget {
                     Text(
                       '${record.kodeMhs} • NIM: ${record.nim}',
                       style: const TextStyle(
-                        fontSize: 16,
+                        fontSize: 13.5,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF0F172A),
                       ),
@@ -89,25 +89,25 @@ class StudentDetailSheet extends StatelessWidget {
                     const SizedBox(height: 2),
                     Text(
                       'IPS S1: ${record.ipsSem1.toStringAsFixed(2)} • S2: ${record.ipsSem2.toStringAsFixed(2)} • UKT: ${record.uktLancar == 1 ? "Lancar" : "Menunggak"}',
-                      style: const TextStyle(fontSize: 12, color: Color(0xFF64748B)),
+                      style: const TextStyle(fontSize: 11.5, color: Color(0xFF64748B)),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
                   color: statusColor.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(8),
                   border: Border.all(color: statusColor.withValues(alpha: 0.3)),
                 ),
                 child: Text(
-                  record.kategoriRisiko,
+                  record.kategoriRisiko.replaceAll('Indikasi ', ''),
                   style: TextStyle(
                     color: statusColor,
                     fontWeight: FontWeight.bold,
-                    fontSize: 11,
+                    fontSize: 10.5,
                   ),
                 ),
               ),
@@ -183,12 +183,14 @@ class StudentDetailSheet extends StatelessWidget {
                     children: [
                       Icon(Icons.hub_outlined, size: 16, color: Color(0xFF1E40AF)),
                       SizedBox(width: 6),
-                      Text(
-                        'Rincian Indikator Rekayasa Fitur (Tahun Pertama)',
-                        style: TextStyle(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E293B),
+                      Expanded(
+                        child: Text(
+                          'Rincian Indikator Rekayasa Fitur',
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFF1E293B),
+                          ),
                         ),
                       ),
                     ],
@@ -220,7 +222,7 @@ class StudentDetailSheet extends StatelessWidget {
                     children: [
                       Expanded(
                         child: _buildPassRatioCard(
-                          title: 'Rasio Lulus Sem 1',
+                          title: 'Rasio Lulus S1',
                           percent: record.rasioLulusSem1Persen,
                           gagal: record.matkulGagalSem1,
                           diambil: record.matkulDiambilSem1,
@@ -229,7 +231,7 @@ class StudentDetailSheet extends StatelessWidget {
                       const SizedBox(width: 8),
                       Expanded(
                         child: _buildPassRatioCard(
-                          title: 'Rasio Lulus Sem 2',
+                          title: 'Rasio Lulus S2',
                           percent: record.rasioLulusSem2Persen,
                           gagal: record.matkulGagalSem2,
                           diambil: record.matkulDiambilSem2,
@@ -307,9 +309,9 @@ class StudentDetailSheet extends StatelessWidget {
                     Navigator.pop(context);
                     onEdit(record);
                   },
-                  icon: const Icon(Icons.edit_note_rounded, size: 20),
+                  icon: const Icon(Icons.edit_note_rounded, size: 18),
                   label: const Text(
-                    'Evaluasi / Perbarui Data',
+                    'Evaluasi Data',
                     style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
                   ),
                 ),
@@ -331,7 +333,7 @@ class StudentDetailSheet extends StatelessWidget {
     required Color borderColor,
   }) {
     return Container(
-      padding: const EdgeInsets.all(10),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(10),
@@ -343,11 +345,11 @@ class StudentDetailSheet extends StatelessWidget {
           Row(
             children: [
               Icon(icon, size: 14, color: const Color(0xFF64748B)),
-              const SizedBox(width: 5),
+              const SizedBox(width: 4),
               Expanded(
                 child: Text(
                   title,
-                  style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+                  style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
@@ -357,14 +359,14 @@ class StudentDetailSheet extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             value,
-            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800, color: valueColor),
+            style: TextStyle(fontSize: 13.5, fontWeight: FontWeight.w800, color: valueColor),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
           const SizedBox(height: 2),
           Text(
             subtitle,
-            style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
+            style: const TextStyle(fontSize: 9.5, color: Color(0xFF94A3B8)),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           ),
