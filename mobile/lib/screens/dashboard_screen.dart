@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import '../models/prediction_model.dart';
 import '../services/api_service.dart';
 import '../services/history_repository.dart';
+import '../widgets/student_detail_sheet.dart';
 
 class DashboardScreen extends StatefulWidget {
-  final VoidCallback onNavigateToPrediction;
+  final void Function([ScreeningRecord? record]) onNavigateToPrediction;
   final VoidCallback onNavigateToHistory;
 
   const DashboardScreen({
@@ -39,6 +40,30 @@ class _DashboardScreenState extends State<DashboardScreen> {
     if (mounted) setState(() {});
   }
 
+  int get _avgKolektifPersen {
+    if (_repo.records.isEmpty) return 0;
+    final sum = _repo.records.fold<int>(0, (prev, r) => prev + r.persentaseBulat);
+    return (sum / _repo.records.length).round();
+  }
+
+  double get _avgIpsKolektif {
+    if (_repo.records.isEmpty) return 0.0;
+    final sum = _repo.records.fold<double>(0.0, (prev, r) => prev + ((r.ipsSem1 + r.ipsSem2) / 2.0));
+    return sum / _repo.records.length;
+  }
+
+  int get _rasioLulusKolektifPersen {
+    if (_repo.records.isEmpty) return 0;
+    final totalDiambil = _repo.records.fold<int>(0, (prev, r) => prev + r.matkulDiambilSem1 + r.matkulDiambilSem2);
+    final totalLulus = _repo.records.fold<int>(0, (prev, r) => prev + r.matkulLulusSem1 + r.matkulLulusSem2);
+    if (totalDiambil == 0) return 0;
+    return ((totalLulus / totalDiambil) * 100).round();
+  }
+
+  int get _totalUktMenunggak {
+    return _repo.records.where((r) => r.uktLancar == 0).length;
+  }
+
   Future<void> _checkApiStatus() async {
     setState(() => _isCheckingApi = true);
     final isHealthy = await ApiService.checkHealth();
@@ -54,133 +79,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _showRecordDetail(ScreeningRecord record) {
-    Color statusColor;
-    if (record.kategoriRisiko.contains('Tinggi') || record.persentaseBulat >= 70) {
-      statusColor = const Color(0xFFDC2626);
-    } else if (record.kategoriRisiko.contains('Sedang') || record.persentaseBulat >= 40) {
-      statusColor = const Color(0xFFD97706);
-    } else {
-      statusColor = const Color(0xFF16A34A);
-    }
-
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => Container(
-        padding: const EdgeInsets.all(20),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 40,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(2),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${record.kodeMhs} • NIM: ${record.nim}',
-                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      'IPS Sem1: ${record.ipsSem1.toStringAsFixed(2)} • Sem2: ${record.ipsSem2.toStringAsFixed(2)} • UKT: ${record.uktLancar == 1 ? "Lancar" : "Menunggak"}',
-                      style: const TextStyle(fontSize: 12, color: Colors.black54),
-                    ),
-                  ],
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: statusColor.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: Text(
-                    record.kategoriRisiko,
-                    style: TextStyle(
-                      color: statusColor,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            const Divider(),
-            const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Probabilitas Keterlambatan:', style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
-                Text(
-                  '${record.persentaseBulat}%',
-                  style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: statusColor),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: statusColor.withValues(alpha: 0.08),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.info_outline, size: 16, color: statusColor),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Pemicu Utama: ${record.penyebabUtama}',
-                      style: TextStyle(fontSize: 12, fontWeight: FontWeight.w600, color: statusColor),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-            const Text(
-              'Faktor Pemicu Risiko (Observasi Data):',
-              style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 6),
-            if (record.faktorPemicu.isEmpty)
-              const Text('• Tidak ada faktor pemicu kritis.', style: TextStyle(fontSize: 13, color: Colors.black87))
-            else
-              ...record.faktorPemicu.map(
-                (f) => Padding(
-                  padding: const EdgeInsets.only(bottom: 4.0),
-                  child: Text('• $f', style: const TextStyle(fontSize: 13, color: Colors.black87)),
-                ),
-              ),
-            const SizedBox(height: 20),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton(
-                onPressed: () => Navigator.pop(ctx),
-                child: const Text('Tutup'),
-              ),
-            ),
-          ],
-        ),
-      ),
+    StudentDetailSheet.show(
+      context,
+      record: record,
+      onEdit: (rec) => widget.onNavigateToPrediction(rec),
     );
   }
 
@@ -390,6 +292,11 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
               const SizedBox(height: 12),
 
+              // Card Utama: Indikasi Risiko Keseluruhan Mahasiswa Bimbingan
+              _buildOverallRiskCard(),
+
+              const SizedBox(height: 12),
+
               // Metrics Grid (4 Kategori Seragam)
               Row(
                 children: [
@@ -436,6 +343,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
               ),
 
               const SizedBox(height: 24),
+
+              // Seksi Baru: Prioritas Perwalian (Top 3 Indikasi Risiko Tertinggi)
+              _buildTop3PrioritySection(),
 
               // Recent Screening Header
               Row(
@@ -505,6 +415,378 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildOverallRiskCard() {
+    final count = _repo.totalCount;
+    if (count == 0) {
+      return const SizedBox.shrink();
+    }
+
+    final avgRisk = _avgKolektifPersen;
+    final Color riskColor;
+    final String riskLabel;
+    if (avgRisk >= 70) {
+      riskColor = const Color(0xFFDC2626);
+      riskLabel = 'Indikasi Risiko Tinggi';
+    } else if (avgRisk >= 40) {
+      riskColor = const Color(0xFFD97706);
+      riskLabel = 'Indikasi Risiko Sedang';
+    } else {
+      riskColor = const Color(0xFF16A34A);
+      riskLabel = 'Indikasi Risiko Rendah';
+    }
+
+    final pctRendah = (_repo.rendahCount / count * 100).round();
+    final pctSedang = (_repo.sedangCount / count * 100).round();
+    final pctTinggi = (_repo.tinggiCount / count * 100).round();
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.04),
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              const Text(
+                'Indikasi Risiko Keseluruhan Mahasiswa Bimbingan',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: riskColor.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  riskLabel,
+                  style: TextStyle(color: riskColor, fontSize: 11, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                '$avgRisk%',
+                style: TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w900,
+                  color: riskColor,
+                  height: 1,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Text(
+                'Rata-rata Probabilitas Kolektif',
+                style: TextStyle(fontSize: 12, color: Color(0xFF64748B), fontWeight: FontWeight.w500),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Stacked Progress Bar 3 Kategori (Bulat)
+          ClipRRect(
+            borderRadius: BorderRadius.circular(6),
+            child: SizedBox(
+              height: 10,
+              child: Row(
+                children: [
+                  if (_repo.rendahCount > 0)
+                    Expanded(
+                      flex: _repo.rendahCount,
+                      child: Container(color: const Color(0xFF16A34A)),
+                    ),
+                  if (_repo.sedangCount > 0)
+                    Expanded(
+                      flex: _repo.sedangCount,
+                      child: Container(color: const Color(0xFFD97706)),
+                    ),
+                  if (_repo.tinggiCount > 0)
+                    Expanded(
+                      flex: _repo.tinggiCount,
+                      child: Container(color: const Color(0xFFDC2626)),
+                    ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(children: [
+                Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFF16A34A), shape: BoxShape.circle)),
+                const SizedBox(width: 4),
+                Text('Rendah: $pctRendah%', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+              ]),
+              Row(children: [
+                Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFFD97706), shape: BoxShape.circle)),
+                const SizedBox(width: 4),
+                Text('Sedang: $pctSedang%', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+              ]),
+              Row(children: [
+                Container(width: 8, height: 8, decoration: const BoxDecoration(color: Color(0xFFDC2626), shape: BoxShape.circle)),
+                const SizedBox(width: 4),
+                Text('Tinggi: $pctTinggi%', style: const TextStyle(fontSize: 11, color: Color(0xFF64748B), fontWeight: FontWeight.w600)),
+              ]),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Divider(height: 1, color: Color(0xFFF1F5F9)),
+          const SizedBox(height: 12),
+          // Ringkasan 3 Indikator Kolektif
+          Row(
+            children: [
+              Expanded(
+                child: _buildCollectiveStatItem(
+                  label: 'Rata-rata IPS Kolektif',
+                  value: _avgIpsKolektif.toStringAsFixed(2),
+                  icon: Icons.school_outlined,
+                ),
+              ),
+              Container(width: 1, height: 32, color: const Color(0xFFE2E8F0)),
+              Expanded(
+                child: _buildCollectiveStatItem(
+                  label: 'Rasio Lulus Kolektif',
+                  value: '$_rasioLulusKolektifPersen%',
+                  icon: Icons.check_circle_outline,
+                ),
+              ),
+              Container(width: 1, height: 32, color: const Color(0xFFE2E8F0)),
+              Expanded(
+                child: _buildCollectiveStatItem(
+                  label: 'UKT Menunggak',
+                  value: '$_totalUktMenunggak Mhs',
+                  icon: Icons.payment_outlined,
+                  isAlert: _totalUktMenunggak > 0,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCollectiveStatItem({
+    required String label,
+    required String value,
+    required IconData icon,
+    bool isAlert = false,
+  }) {
+    return Column(
+      children: [
+        Icon(icon, size: 16, color: isAlert ? const Color(0xFFDC2626) : const Color(0xFF64748B)),
+        const SizedBox(height: 4),
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: isAlert ? const Color(0xFFDC2626) : const Color(0xFF1E293B),
+          ),
+        ),
+        const SizedBox(height: 2),
+        Text(
+          label,
+          textAlign: TextAlign.center,
+          style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildTop3PrioritySection() {
+    // Ambil seluruh data lalu urutkan berdasarkan persentase_bulat tertinggi
+    final sortedRecords = [..._repo.records]
+      ..sort((a, b) => b.persentaseBulat.compareTo(a.persentaseBulat));
+
+    final top3 = sortedRecords.take(3).toList();
+    final highRiskCount = _repo.records
+        .where((r) => r.kategoriRisiko.contains('Tinggi') || r.persentaseBulat >= 70)
+        .length;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(5),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDC2626).withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: const Icon(Icons.priority_high_rounded, color: Color(0xFFDC2626), size: 16),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'Prioritas Perwalian (Top 3 Indikasi Risiko Tertinggi)',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF1E293B),
+                  ),
+                ),
+              ],
+            ),
+            if (highRiskCount > 0)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFDC2626),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  '$highRiskCount Mahasiswa',
+                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (top3.isEmpty)
+          Card(
+            elevation: 0,
+            color: const Color(0xFFF0FDF4),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(12),
+              side: const BorderSide(color: Color(0xFFBBF7D0)),
+            ),
+            child: const Padding(
+              padding: EdgeInsets.all(14.0),
+              child: Row(
+                children: [
+                  Icon(Icons.check_circle_rounded, color: Color(0xFF16A34A), size: 20),
+                  SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Belum ada data riwayat skrining mahasiswa.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF166534), fontWeight: FontWeight.w500),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          ...top3.asMap().entries.map((entry) {
+            final index = entry.key + 1;
+            final record = entry.value;
+            return _buildPriorityCard(record, rank: index);
+          }),
+        const SizedBox(height: 16),
+      ],
+    );
+  }
+
+  Widget _buildPriorityCard(ScreeningRecord record, {required int rank}) {
+    const badgeColor = Color(0xFFDC2626);
+    final isUktLancar = record.uktLancar == 1;
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 10),
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFFECACA), width: 1),
+      ),
+      child: Container(
+        decoration: const BoxDecoration(
+          color: Colors.white,
+          border: Border(
+            left: BorderSide(color: Color(0xFFDC2626), width: 5),
+          ),
+        ),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(16),
+          onTap: () => _showRecordDetail(record),
+          child: Padding(
+            padding: const EdgeInsets.all(14.0),
+            child: Row(
+              children: [
+                CircleAvatar(
+                  backgroundColor: const Color(0xFFFEF2F2),
+                  foregroundColor: badgeColor,
+                  child: Text(
+                    '#$rank',
+                    style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 13),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '${record.kodeMhs} • NIM: ${record.nim}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.bold,
+                          fontSize: 14,
+                          color: Color(0xFF0F172A),
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'IPS Sem1: ${record.ipsSem1.toStringAsFixed(2)} • Sem2: ${record.ipsSem2.toStringAsFixed(2)} • UKT: ${isUktLancar ? "Lancar" : "Menunggak"}',
+                        style: const TextStyle(fontSize: 12, color: Color(0xFF475569)),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        'Pemicu Utama: ${record.penyebabUtama}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: badgeColor,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: badgeColor.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(6),
+                  ),
+                  child: Text(
+                    '${record.persentaseBulat}%',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                      color: badgeColor,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

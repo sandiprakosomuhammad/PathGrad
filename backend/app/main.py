@@ -2,7 +2,7 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from app.schemas import StudentPredictionRequest, PredictionResponse, HistoryResponse
 from app.ml_model import evaluate_student, evaluate_core
-from app.database import init_db, get_all_history, insert_record, get_next_student_identity
+from app.database import init_db, get_all_history, insert_record, upsert_record, get_next_student_identity
 
 app = FastAPI(
     title="PathGrad — API Prediksi Risiko Keterlambatan Kelulusan",
@@ -79,8 +79,9 @@ def get_history():
 def predict(request: StudentPredictionRequest):
     try:
         if request.simpan_riwayat or (request.nim and request.nim.strip()):
-            next_kode, default_nim = get_next_student_identity()
-            final_nim = request.nim.strip() if request.nim and request.nim.strip() else default_nim
+            target_kode = request.kode_anonim.strip() if (request.kode_anonim and request.kode_anonim != "MHS-ANON") else None
+            target_nim = request.nim.strip() if (request.nim and request.nim.strip() and request.nim.strip() != "-") else None
+
             eval_res = evaluate_core(
                 ips_sem1=request.ips_sem1,
                 matkul_diambil_sem1=request.matkul_diambil_sem1,
@@ -89,13 +90,14 @@ def predict(request: StudentPredictionRequest):
                 matkul_diambil_sem2=request.matkul_diambil_sem2,
                 matkul_lulus_sem2=request.matkul_lulus_sem2,
                 ukt_lancar=request.ukt_lancar,
-                kode_mhs=next_kode,
-                nim=final_nim
+                kode_mhs=target_kode or "MHS-ANON",
+                nim=target_nim or "-"
             )
-            # Simpan ke SQLite
-            insert_record({
-                "kode_mhs": next_kode,
-                "nim": final_nim,
+
+            # Simpan atau update ke SQLite
+            rec_id, final_kode, final_nim, is_updated = upsert_record({
+                "kode_mhs": target_kode,
+                "nim": target_nim,
                 "ips_sem1": request.ips_sem1,
                 "matkul_diambil_sem1": request.matkul_diambil_sem1,
                 "matkul_lulus_sem1": request.matkul_lulus_sem1,
@@ -110,8 +112,8 @@ def predict(request: StudentPredictionRequest):
             })
 
             return PredictionResponse(
-                kode_anonim=next_kode,
-                kode_mhs=next_kode,
+                kode_anonim=final_kode,
+                kode_mhs=final_kode,
                 nim=final_nim,
                 risk_level=eval_res["risk_level"],
                 risk_percentage=eval_res["risk_percentage"],
@@ -120,7 +122,14 @@ def predict(request: StudentPredictionRequest):
                 penyebab_utama=eval_res["penyebab_utama"],
                 faktor_pemicu=eval_res["faktor_pemicu"],
                 top_factors=eval_res["top_factors"],
-                recommendations=[]
+                recommendations=[],
+                rata_rata_ips=eval_res["rata_rata_ips"],
+                tren_ips=eval_res["tren_ips"],
+                tren_ips_label=eval_res["tren_ips_label"],
+                rasio_lulus_sem1_persen=eval_res["rasio_lulus_sem1_persen"],
+                matkul_gagal_sem1=eval_res["matkul_gagal_sem1"],
+                rasio_lulus_sem2_persen=eval_res["rasio_lulus_sem2_persen"],
+                matkul_gagal_sem2=eval_res["matkul_gagal_sem2"],
             )
         else:
             return evaluate_student(request)

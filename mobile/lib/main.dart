@@ -62,6 +62,45 @@ class PrediksiKelulusanApp extends StatelessWidget {
           labelStyle: const TextStyle(color: Color(0xFF64748B), fontSize: 14),
         ),
       ),
+      builder: (context, child) {
+        return Container(
+          color: const Color(0xFFE2E8F0),
+          alignment: Alignment.center,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(maxWidth: 430),
+            child: Container(
+              decoration: BoxDecoration(
+                color: const Color(0xFFF8FAFC),
+                border: Border.all(
+                  color: const Color(0xFFCBD5E1),
+                  width: 1,
+                ),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x26000000),
+                    blurRadius: 30,
+                    spreadRadius: 2,
+                    offset: Offset(0, 8),
+                  ),
+                ],
+              ),
+              child: ClipRect(
+                child: LayoutBuilder(
+                  builder: (ctx, constraints) {
+                    final media = MediaQuery.of(context);
+                    return MediaQuery(
+                      data: media.copyWith(
+                        size: Size(constraints.maxWidth, media.size.height),
+                      ),
+                      child: child ?? const SizedBox(),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        );
+      },
       home: const SplashScreen(),
     );
   }

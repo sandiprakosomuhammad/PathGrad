@@ -5,8 +5,13 @@ import '../services/history_repository.dart';
 
 class PredictionScreen extends StatefulWidget {
   final VoidCallback? onBackToDashboard;
+  final ScreeningRecord? initialRecord;
 
-  const PredictionScreen({super.key, this.onBackToDashboard});
+  const PredictionScreen({
+    super.key,
+    this.onBackToDashboard,
+    this.initialRecord,
+  });
 
   @override
   State<PredictionScreen> createState() => _PredictionScreenState();
@@ -15,18 +20,46 @@ class PredictionScreen extends StatefulWidget {
 class _PredictionScreenState extends State<PredictionScreen> {
   final _formKey = GlobalKey<FormState>();
 
+  String? _editingKodeMhs;
+
   // ── Controllers (Identitas NIM & 7 Parameter Akademik) ─────────────────
-  final _nimController           = TextEditingController();
-  final _ipsSem1Controller       = TextEditingController(text: '2.50');
-  final _mkDiambilSem1Controller = TextEditingController(text: '6');
-  final _mkLulusSem1Controller   = TextEditingController(text: '4');
-  final _ipsSem2Controller       = TextEditingController(text: '2.00');
-  final _mkDiambilSem2Controller = TextEditingController(text: '6');
-  final _mkLulusSem2Controller   = TextEditingController(text: '3');
+  late final TextEditingController _nimController;
+  late final TextEditingController _ipsSem1Controller;
+  late final TextEditingController _mkDiambilSem1Controller;
+  late final TextEditingController _mkLulusSem1Controller;
+  late final TextEditingController _ipsSem2Controller;
+  late final TextEditingController _mkDiambilSem2Controller;
+  late final TextEditingController _mkLulusSem2Controller;
   int _uktLancar = 1; // 0 = Menunggak, 1 = Lancar
 
   bool _isLoading = false;
   PredictionResponse? _predictionResult;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.initialRecord != null) {
+      final rec = widget.initialRecord!;
+      _editingKodeMhs = rec.kodeMhs;
+      _nimController = TextEditingController(text: rec.nim != '-' ? rec.nim : '');
+      _ipsSem1Controller = TextEditingController(text: rec.ipsSem1.toStringAsFixed(2));
+      _mkDiambilSem1Controller = TextEditingController(text: rec.matkulDiambilSem1.toString());
+      _mkLulusSem1Controller = TextEditingController(text: rec.matkulLulusSem1.toString());
+      _ipsSem2Controller = TextEditingController(text: rec.ipsSem2.toStringAsFixed(2));
+      _mkDiambilSem2Controller = TextEditingController(text: rec.matkulDiambilSem2.toString());
+      _mkLulusSem2Controller = TextEditingController(text: rec.matkulLulusSem2.toString());
+      _uktLancar = rec.uktLancar;
+    } else {
+      _nimController = TextEditingController();
+      _ipsSem1Controller = TextEditingController(text: '2.50');
+      _mkDiambilSem1Controller = TextEditingController(text: '6');
+      _mkLulusSem1Controller = TextEditingController(text: '4');
+      _ipsSem2Controller = TextEditingController(text: '2.00');
+      _mkDiambilSem2Controller = TextEditingController(text: '6');
+      _mkLulusSem2Controller = TextEditingController(text: '3');
+      _uktLancar = 1;
+    }
+  }
 
   @override
   void dispose() {
@@ -86,7 +119,7 @@ class _PredictionScreenState extends State<PredictionScreen> {
     try {
       final inputNim = _nimController.text.trim();
       final req = StudentPredictionRequest(
-        kodeAnonim:          'MHS-ANON',
+        kodeAnonim:          _editingKodeMhs ?? 'MHS-ANON',
         nim:                 inputNim.isNotEmpty ? inputNim : null,
         simpanRiwayat:      true,
         ipsSem1:             double.parse(_ipsSem1Controller.text.trim()),
@@ -102,6 +135,19 @@ class _PredictionScreenState extends State<PredictionScreen> {
 
       // Refresh data di HistoryRepository agar langsung tersinkron dari SQLite
       await HistoryRepository().refreshFromApi();
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              _editingKodeMhs != null
+                  ? 'Data ${result.kodeMhs} berhasil diperbarui di database.'
+                  : 'Hasil skrining ${result.kodeMhs} berhasil disimpan.',
+            ),
+            backgroundColor: const Color(0xFF16A34A),
+          ),
+        );
+      }
 
       setState(() => _predictionResult = result);
     } catch (e) {
@@ -182,6 +228,46 @@ class _PredictionScreenState extends State<PredictionScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              if (_editingKodeMhs != null)
+                Container(
+                  margin: const EdgeInsets.only(bottom: 14),
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFEFF6FF),
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: const Color(0xFF93C5FD)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.edit_note_rounded, color: Color(0xFF1D4ED8), size: 24),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Mode Evaluasi / Perbarui Data: $_editingKodeMhs',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: Color(0xFF1E3A8A)),
+                            ),
+                            const Text(
+                              'Data baru akan memperbarui data mahasiswa ini di database SQLite.',
+                              style: TextStyle(fontSize: 11, color: Color(0xFF2563EB)),
+                            ),
+                          ],
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          setState(() {
+                            _editingKodeMhs = null;
+                            _nimController.clear();
+                          });
+                        },
+                        child: const Text('Reset', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                ),
               // ── Card: Identitas & Semester 1 ──────────────────────────
               Card(
                 child: Padding(

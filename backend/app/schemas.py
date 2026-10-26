@@ -99,6 +99,14 @@ class PredictionResponse(BaseModel):
     faktor_pemicu: List[str] # Observasi data faktual
     top_factors: List[str] = Field(default_factory=list) # Kompatibilitas mundur
     recommendations: List[str] = Field(default_factory=list) # Dikosongkan sesuai aturan Dosen PA
+    # 6 Fitur Rekayasa Turunan
+    rata_rata_ips: float = 0.0
+    tren_ips: float = 0.0
+    tren_ips_label: str = "0.00 (Stabil)"
+    rasio_lulus_sem1_persen: int = 100
+    matkul_gagal_sem1: int = 0
+    rasio_lulus_sem2_persen: int = 100
+    matkul_gagal_sem2: int = 0
 
 
 class HistoryRecordItem(BaseModel):
@@ -117,6 +125,14 @@ class HistoryRecordItem(BaseModel):
     penyebab_utama: str
     faktor_pemicu: List[str]
     created_at: str
+    # 6 Fitur Rekayasa Turunan
+    rata_rata_ips: float = 0.0
+    tren_ips: float = 0.0
+    tren_ips_label: str = "0.00 (Stabil)"
+    rasio_lulus_sem1_persen: int = 100
+    matkul_gagal_sem1: int = 0
+    rasio_lulus_sem2_persen: int = 100
+    matkul_gagal_sem2: int = 0
 
 
 class HistoryResponse(BaseModel):

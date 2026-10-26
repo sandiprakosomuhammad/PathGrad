@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../models/prediction_model.dart';
 import 'dashboard_screen.dart';
 import 'history_screen.dart';
 import 'prediction_screen.dart';
@@ -13,10 +14,11 @@ class MainShellScreen extends StatefulWidget {
 class _MainShellScreenState extends State<MainShellScreen> {
   int _currentIndex = 0;
 
-  void _openPredictionScreen() {
+  void _openPredictionScreen([ScreeningRecord? record]) {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (context) => PredictionScreen(
+          initialRecord: record,
           onBackToDashboard: () {
             Navigator.pop(context);
             setState(() => _currentIndex = 0);

@@ -48,6 +48,14 @@ class PredictionResponse {
   final String predictionLabel;
   final String penyebabUtama;
   final List<String> faktorPemicu;
+  // 6 Fitur Rekayasa
+  final double rataRataIps;
+  final double trenIps;
+  final String trenIpsLabel;
+  final int rasioLulusSem1Persen;
+  final int matkulGagalSem1;
+  final int rasioLulusSem2Persen;
+  final int matkulGagalSem2;
 
   PredictionResponse({
     required this.kodeMhs,
@@ -58,6 +66,13 @@ class PredictionResponse {
     required this.predictionLabel,
     required this.penyebabUtama,
     required this.faktorPemicu,
+    this.rataRataIps = 0.0,
+    this.trenIps = 0.0,
+    this.trenIpsLabel = '0.00 (Stabil)',
+    this.rasioLulusSem1Persen = 100,
+    this.matkulGagalSem1 = 0,
+    this.rasioLulusSem2Persen = 100,
+    this.matkulGagalSem2 = 0,
   });
 
   // Kompatibilitas jika ada kode lama yang memanggil kodeAnonim / topFactors
@@ -77,15 +92,26 @@ class PredictionResponse {
             ? List<String>.from(json['top_factors'])
             : <String>[]);
 
+    final dTren = (json['tren_ips'] as num?)?.toDouble() ?? 0.0;
+    final String dTrenLabel = json['tren_ips_label'] ??
+        (dTren > 0 ? '+${dTren.toStringAsFixed(2)} (Naik)' : dTren < 0 ? '${dTren.toStringAsFixed(2)} (Turun)' : '0.00 (Stabil)');
+
     return PredictionResponse(
-      kodeMhs:         json['kode_mhs'] ?? json['kode_anonim'] ?? 'MHS-001',
-      nim:             json['nim'] ?? '-',
-      riskLevel:       json['risk_level'] ?? json['kategori_risiko'] ?? 'Indikasi Risiko Rendah',
-      riskPercentage:  pDouble,
-      persentaseBulat: pBulat,
-      predictionLabel: json['prediction_label'] ?? json['risk_level'] ?? 'Indikasi Risiko Rendah',
-      penyebabUtama:   json['penyebab_utama'] ?? 'Akademik stabil & mata kuliah tuntas',
-      faktorPemicu:    pemicu,
+      kodeMhs:              json['kode_mhs'] ?? json['kode_anonim'] ?? 'MHS-001',
+      nim:                  json['nim'] ?? '-',
+      riskLevel:            json['risk_level'] ?? json['kategori_risiko'] ?? 'Indikasi Risiko Rendah',
+      riskPercentage:       pDouble,
+      persentaseBulat:      pBulat,
+      predictionLabel:      json['prediction_label'] ?? json['risk_level'] ?? 'Indikasi Risiko Rendah',
+      penyebabUtama:        json['penyebab_utama'] ?? 'Akademik stabil & mata kuliah tuntas',
+      faktorPemicu:         pemicu,
+      rataRataIps:          (json['rata_rata_ips'] as num?)?.toDouble() ?? 0.0,
+      trenIps:              dTren,
+      trenIpsLabel:         dTrenLabel,
+      rasioLulusSem1Persen: (json['rasio_lulus_sem1_persen'] as num?)?.toInt() ?? 100,
+      matkulGagalSem1:      (json['matkul_gagal_sem1'] as num?)?.toInt() ?? 0,
+      rasioLulusSem2Persen: (json['rasio_lulus_sem2_persen'] as num?)?.toInt() ?? 100,
+      matkulGagalSem2:      (json['matkul_gagal_sem2'] as num?)?.toInt() ?? 0,
     );
   }
 }
@@ -106,6 +132,14 @@ class ScreeningRecord {
   final String kategoriRisiko;
   final String penyebabUtama;
   final List<String> faktorPemicu;
+  // 6 Fitur Rekayasa
+  final double rataRataIps;
+  final double trenIps;
+  final String trenIpsLabel;
+  final int rasioLulusSem1Persen;
+  final int matkulGagalSem1;
+  final int rasioLulusSem2Persen;
+  final int matkulGagalSem2;
 
   ScreeningRecord({
     required this.id,
@@ -123,7 +157,27 @@ class ScreeningRecord {
     required this.kategoriRisiko,
     required this.penyebabUtama,
     required this.faktorPemicu,
-  });
+    double? rataRataIps,
+    double? trenIps,
+    String? trenIpsLabel,
+    int? rasioLulusSem1Persen,
+    int? matkulGagalSem1,
+    int? rasioLulusSem2Persen,
+    int? matkulGagalSem2,
+  })  : rataRataIps = rataRataIps ?? double.parse(((ipsSem1 + ipsSem2) / 2.0).toStringAsFixed(2)),
+        trenIps = trenIps ?? double.parse((ipsSem2 - ipsSem1).toStringAsFixed(2)),
+        trenIpsLabel = trenIpsLabel ??
+            ((ipsSem2 - ipsSem1) > 0
+                ? '+${(ipsSem2 - ipsSem1).toStringAsFixed(2)} (Naik)'
+                : (ipsSem2 - ipsSem1) < 0
+                    ? '${(ipsSem2 - ipsSem1).toStringAsFixed(2)} (Turun)'
+                    : '0.00 (Stabil)'),
+        rasioLulusSem1Persen = rasioLulusSem1Persen ??
+            (matkulDiambilSem1 > 0 ? ((matkulLulusSem1 / matkulDiambilSem1) * 100).round() : 0),
+        matkulGagalSem1 = matkulGagalSem1 ?? (matkulDiambilSem1 - matkulLulusSem1 < 0 ? 0 : matkulDiambilSem1 - matkulLulusSem1),
+        rasioLulusSem2Persen = rasioLulusSem2Persen ??
+            (matkulDiambilSem2 > 0 ? ((matkulLulusSem2 / matkulDiambilSem2) * 100).round() : 0),
+        matkulGagalSem2 = matkulGagalSem2 ?? (matkulDiambilSem2 - matkulLulusSem2 < 0 ? 0 : matkulDiambilSem2 - matkulLulusSem2);
 
   // Getter pembantu agar kompatibel dengan widget yang mengakses record.result
   PredictionResponse get result => PredictionResponse(
@@ -135,6 +189,13 @@ class ScreeningRecord {
     predictionLabel: kategoriRisiko,
     penyebabUtama: penyebabUtama,
     faktorPemicu: faktorPemicu,
+    rataRataIps: rataRataIps,
+    trenIps: trenIps,
+    trenIpsLabel: trenIpsLabel,
+    rasioLulusSem1Persen: rasioLulusSem1Persen,
+    matkulGagalSem1: matkulGagalSem1,
+    rasioLulusSem2Persen: rasioLulusSem2Persen,
+    matkulGagalSem2: matkulGagalSem2,
   );
 
   String get kodeAnonim => kodeMhs;
@@ -151,22 +212,49 @@ class ScreeningRecord {
         ? List<String>.from(json['faktor_pemicu'])
         : <String>[];
 
+    final ips1 = (json['ips_sem1'] as num?)?.toDouble() ?? 0.0;
+    final ips2 = (json['ips_sem2'] as num?)?.toDouble() ?? 0.0;
+    final ambil1 = (json['matkul_diambil_sem1'] as num?)?.toInt() ?? 6;
+    final lulus1 = (json['matkul_lulus_sem1'] as num?)?.toInt() ?? 6;
+    final ambil2 = (json['matkul_diambil_sem2'] as num?)?.toInt() ?? 6;
+    final lulus2 = (json['matkul_lulus_sem2'] as num?)?.toInt() ?? 6;
+
+    final avgIps = (json['rata_rata_ips'] as num?)?.toDouble() ?? double.parse(((ips1 + ips2) / 2.0).toStringAsFixed(2));
+    final dTren = (json['tren_ips'] as num?)?.toDouble() ?? double.parse((ips2 - ips1).toStringAsFixed(2));
+    final dTrenLabel = json['tren_ips_label'] ??
+        (dTren > 0 ? '+${dTren.toStringAsFixed(2)} (Naik)' : dTren < 0 ? '${dTren.toStringAsFixed(2)} (Turun)' : '0.00 (Stabil)');
+    final r1 = (json['rasio_lulus_sem1_persen'] as num?)?.toInt() ??
+        (ambil1 > 0 ? ((lulus1 / ambil1) * 100).round() : 0);
+    final g1 = (json['matkul_gagal_sem1'] as num?)?.toInt() ??
+        (ambil1 - lulus1 < 0 ? 0 : ambil1 - lulus1);
+    final r2 = (json['rasio_lulus_sem2_persen'] as num?)?.toInt() ??
+        (ambil2 > 0 ? ((lulus2 / ambil2) * 100).round() : 0);
+    final g2 = (json['matkul_gagal_sem2'] as num?)?.toInt() ??
+        (ambil2 - lulus2 < 0 ? 0 : ambil2 - lulus2);
+
     return ScreeningRecord(
-      id:                 json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0,
-      kodeMhs:            json['kode_mhs'] ?? 'MHS-001',
-      nim:                json['nim'] ?? '-',
-      date:               parsedDate,
-      ipsSem1:            (json['ips_sem1'] as num?)?.toDouble() ?? 0.0,
-      matkulDiambilSem1:  (json['matkul_diambil_sem1'] as num?)?.toInt() ?? 6,
-      matkulLulusSem1:    (json['matkul_lulus_sem1'] as num?)?.toInt() ?? 6,
-      ipsSem2:            (json['ips_sem2'] as num?)?.toDouble() ?? 0.0,
-      matkulDiambilSem2:  (json['matkul_diambil_sem2'] as num?)?.toInt() ?? 6,
-      matkulLulusSem2:    (json['matkul_lulus_sem2'] as num?)?.toInt() ?? 6,
-      uktLancar:          (json['ukt_lancar'] as num?)?.toInt() ?? 1,
-      persentaseBulat:    (json['persentase_bulat'] as num?)?.toInt() ?? 0,
-      kategoriRisiko:     json['kategori_risiko'] ?? json['risk_level'] ?? 'Indikasi Risiko Rendah',
-      penyebabUtama:      json['penyebab_utama'] ?? 'Akademik stabil & mata kuliah tuntas',
-      faktorPemicu:       pemicu,
+      id:                   json['id'] is int ? json['id'] : int.tryParse(json['id'].toString()) ?? 0,
+      kodeMhs:              json['kode_mhs'] ?? 'MHS-001',
+      nim:                  json['nim'] ?? '-',
+      date:                 parsedDate,
+      ipsSem1:              ips1,
+      matkulDiambilSem1:    ambil1,
+      matkulLulusSem1:      lulus1,
+      ipsSem2:              ips2,
+      matkulDiambilSem2:    ambil2,
+      matkulLulusSem2:      lulus2,
+      uktLancar:            (json['ukt_lancar'] as num?)?.toInt() ?? 1,
+      persentaseBulat:      (json['persentase_bulat'] as num?)?.toInt() ?? 0,
+      kategoriRisiko:       json['kategori_risiko'] ?? json['risk_level'] ?? 'Indikasi Risiko Rendah',
+      penyebabUtama:        json['penyebab_utama'] ?? 'Akademik stabil & mata kuliah tuntas',
+      faktorPemicu:         pemicu,
+      rataRataIps:          avgIps,
+      trenIps:              dTren,
+      trenIpsLabel:         dTrenLabel,
+      rasioLulusSem1Persen: r1,
+      matkulGagalSem1:      g1,
+      rasioLulusSem2Persen: r2,
+      matkulGagalSem2:      g2,
     );
   }
 }

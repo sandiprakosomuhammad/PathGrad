@@ -182,6 +182,20 @@ def evaluate_core(
     else:
         penyebab_utama = "Kombinasi pola performa akademik tahun pertama"
 
+    rata_rata_ips_val = round((ips_sem1 + ips_sem2) / 2.0, 2)
+    tren_ips_val = round(ips_sem2 - ips_sem1, 2)
+    if tren_ips_val > 0:
+        tren_ips_label = f"+{tren_ips_val:.2f} (Naik)"
+    elif tren_ips_val < 0:
+        tren_ips_label = f"{tren_ips_val:.2f} (Turun)"
+    else:
+        tren_ips_label = "0.00 (Stabil)"
+
+    rasio_lulus_sem1_persen = int(round((matkul_lulus_sem1 / matkul_diambil_sem1) * 100)) if matkul_diambil_sem1 > 0 else 0
+    matkul_gagal_sem1_val = max(0, matkul_diambil_sem1 - matkul_lulus_sem1)
+    rasio_lulus_sem2_persen = int(round((matkul_lulus_sem2 / matkul_diambil_sem2) * 100)) if matkul_diambil_sem2 > 0 else 0
+    matkul_gagal_sem2_val = max(0, matkul_diambil_sem2 - matkul_lulus_sem2)
+
     return {
         "kode_mhs": kode_mhs,
         "nim": nim,
@@ -193,7 +207,14 @@ def evaluate_core(
         "penyebab_utama": penyebab_utama,
         "faktor_pemicu": faktor_pemicu,
         "top_factors": faktor_pemicu,
-        "recommendations": []  # Ditiadakan sesuai tugas Dosen PA
+        "recommendations": [],  # Ditiadakan sesuai tugas Dosen PA
+        "rata_rata_ips": rata_rata_ips_val,
+        "tren_ips": tren_ips_val,
+        "tren_ips_label": tren_ips_label,
+        "rasio_lulus_sem1_persen": rasio_lulus_sem1_persen,
+        "matkul_gagal_sem1": matkul_gagal_sem1_val,
+        "rasio_lulus_sem2_persen": rasio_lulus_sem2_persen,
+        "matkul_gagal_sem2": matkul_gagal_sem2_val,
     }
 
 
@@ -220,5 +241,12 @@ def evaluate_student(data: StudentPredictionRequest) -> PredictionResponse:
         penyebab_utama=res["penyebab_utama"],
         faktor_pemicu=res["faktor_pemicu"],
         top_factors=res["top_factors"],
-        recommendations=[]
+        recommendations=[],
+        rata_rata_ips=res["rata_rata_ips"],
+        tren_ips=res["tren_ips"],
+        tren_ips_label=res["tren_ips_label"],
+        rasio_lulus_sem1_persen=res["rasio_lulus_sem1_persen"],
+        matkul_gagal_sem1=res["matkul_gagal_sem1"],
+        rasio_lulus_sem2_persen=res["rasio_lulus_sem2_persen"],
+        matkul_gagal_sem2=res["matkul_gagal_sem2"],
     )
