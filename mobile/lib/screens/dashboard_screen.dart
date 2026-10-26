@@ -463,12 +463,15 @@ class _DashboardScreenState extends State<DashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Indikasi Risiko Keseluruhan Mahasiswa Bimbingan',
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+              const Expanded(
+                child: Text(
+                  'Indikasi Risiko Keseluruhan Mahasiswa Bimbingan',
+                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(
@@ -630,29 +633,28 @@ class _DashboardScreenState extends State<DashboardScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Row(
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(5),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFDC2626).withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: const Icon(Icons.priority_high_rounded, color: Color(0xFFDC2626), size: 16),
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  'Prioritas Perwalian (Top 3 Indikasi Risiko Tertinggi)',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF1E293B),
-                  ),
-                ),
-              ],
+            Container(
+              padding: const EdgeInsets.all(5),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDC2626).withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: const Icon(Icons.priority_high_rounded, color: Color(0xFFDC2626), size: 16),
             ),
+            const SizedBox(width: 8),
+            const Expanded(
+              child: Text(
+                'Prioritas Perwalian (Top 3 Indikasi Risiko Tertinggi)',
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
             if (highRiskCount > 0)
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),

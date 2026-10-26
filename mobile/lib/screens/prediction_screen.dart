@@ -59,10 +59,28 @@ class _PredictionScreenState extends State<PredictionScreen> {
       _mkLulusSem2Controller = TextEditingController(text: '3');
       _uktLancar = 1;
     }
+
+    _ipsSem1Controller.addListener(_onInputChanged);
+    _ipsSem2Controller.addListener(_onInputChanged);
+    _mkDiambilSem1Controller.addListener(_onInputChanged);
+    _mkLulusSem1Controller.addListener(_onInputChanged);
+    _mkDiambilSem2Controller.addListener(_onInputChanged);
+    _mkLulusSem2Controller.addListener(_onInputChanged);
+  }
+
+  void _onInputChanged() {
+    if (mounted) setState(() {});
   }
 
   @override
   void dispose() {
+    _ipsSem1Controller.removeListener(_onInputChanged);
+    _ipsSem2Controller.removeListener(_onInputChanged);
+    _mkDiambilSem1Controller.removeListener(_onInputChanged);
+    _mkLulusSem1Controller.removeListener(_onInputChanged);
+    _mkDiambilSem2Controller.removeListener(_onInputChanged);
+    _mkLulusSem2Controller.removeListener(_onInputChanged);
+
     _nimController.dispose();
     _ipsSem1Controller.dispose();
     _mkDiambilSem1Controller.dispose();
@@ -71,6 +89,42 @@ class _PredictionScreenState extends State<PredictionScreen> {
     _mkDiambilSem2Controller.dispose();
     _mkLulusSem2Controller.dispose();
     super.dispose();
+  }
+
+  // ── Getter Real-Time 6 Fitur Rekayasa ───────────────────────────────────
+  double get _liveIps1 => double.tryParse(_ipsSem1Controller.text.trim()) ?? 0.0;
+  double get _liveIps2 => double.tryParse(_ipsSem2Controller.text.trim()) ?? 0.0;
+  int get _liveAmbil1 => int.tryParse(_mkDiambilSem1Controller.text.trim()) ?? 0;
+  int get _liveLulus1 => int.tryParse(_mkLulusSem1Controller.text.trim()) ?? 0;
+  int get _liveAmbil2 => int.tryParse(_mkDiambilSem2Controller.text.trim()) ?? 0;
+  int get _liveLulus2 => int.tryParse(_mkLulusSem2Controller.text.trim()) ?? 0;
+
+  double get _liveAvgIps => (_liveIps1 + _liveIps2) / 2.0;
+  double get _liveTrenIps => _liveIps2 - _liveIps1;
+  int get _liveGagal1 => _liveAmbil1 >= _liveLulus1 ? _liveAmbil1 - _liveLulus1 : 0;
+  int get _liveGagal2 => _liveAmbil2 >= _liveLulus2 ? _liveAmbil2 - _liveLulus2 : 0;
+  int get _liveRasio1 => _liveAmbil1 > 0 ? ((_liveLulus1 / _liveAmbil1) * 100).round() : 0;
+  int get _liveRasio2 => _liveAmbil2 > 0 ? ((_liveLulus2 / _liveAmbil2) * 100).round() : 0;
+
+  void _applyPreset({
+    required double ips1,
+    required int ambil1,
+    required int lulus1,
+    required double ips2,
+    required int ambil2,
+    required int lulus2,
+    required int ukt,
+  }) {
+    setState(() {
+      _ipsSem1Controller.text = ips1.toStringAsFixed(2);
+      _mkDiambilSem1Controller.text = ambil1.toString();
+      _mkLulusSem1Controller.text = lulus1.toString();
+      _ipsSem2Controller.text = ips2.toStringAsFixed(2);
+      _mkDiambilSem2Controller.text = ambil2.toString();
+      _mkLulusSem2Controller.text = lulus2.toString();
+      _uktLancar = ukt;
+      _predictionResult = null;
+    });
   }
 
   // ── Validasi Helper ─────────────────────────────────────────────────────
@@ -216,6 +270,90 @@ class _PredictionScreenState extends State<PredictionScreen> {
     );
   }
 
+  Widget _buildPresetChip({
+    required String label,
+    required IconData icon,
+    required Color color,
+    required Color bgColor,
+    required Color borderColor,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
+        decoration: BoxDecoration(
+          color: bgColor,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: borderColor),
+        ),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Icon(icon, size: 14, color: color),
+            const SizedBox(width: 5),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 11.5,
+                fontWeight: FontWeight.bold,
+                color: color,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildRealtimeStatItem({
+    required String label,
+    required String value,
+    required String sublabel,
+    required IconData icon,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 14, color: color),
+              const SizedBox(width: 4),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(fontSize: 10.5, color: Color(0xFF64748B), fontWeight: FontWeight.w600),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            value,
+            style: TextStyle(fontSize: 15, fontWeight: FontWeight.w800, color: color),
+          ),
+          Text(
+            sublabel,
+            style: const TextStyle(fontSize: 10, color: Color(0xFF94A3B8)),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+          ),
+        ],
+      ),
+    );
+  }
+
   // ── BUILD ───────────────────────────────────────────────────────────────
   @override
   Widget build(BuildContext context) {
@@ -268,6 +406,105 @@ class _PredictionScreenState extends State<PredictionScreen> {
                     ],
                   ),
                 ),
+
+              // ── Banner Informasi 13 Fitur Otomatis ──
+              Container(
+                margin: const EdgeInsets.only(bottom: 12),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFEFF6FF),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: const Color(0xFFBFDBFE)),
+                ),
+                child: const Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Icon(Icons.auto_awesome_rounded, color: Color(0xFF2563EB), size: 20),
+                    SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        'Transformasi Otomatis 13 Fitur: 7 input dasar KHS & UKT di bawah ini akan diekstraksi secara otomatis menjadi 13 fitur prediktor model LightGBM.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF1E40AF),
+                          height: 1.4,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ── Seksi Isi Cepat Skenario Demo (Quick Preset) ──
+              Container(
+                margin: const EdgeInsets.only(bottom: 14),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: const Color(0xFFE2E8F0)),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Row(
+                      children: [
+                        Icon(Icons.flash_on_rounded, size: 16, color: Color(0xFFD97706)),
+                        SizedBox(width: 6),
+                        Text(
+                          'Isi Cepat Skenario Demo (Quick Preset)',
+                          style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Wrap(
+                      spacing: 8,
+                      runSpacing: 8,
+                      children: [
+                        _buildPresetChip(
+                          label: 'Skenario Aman',
+                          icon: Icons.check_circle_rounded,
+                          color: const Color(0xFF16A34A),
+                          bgColor: const Color(0xFFF0FDF4),
+                          borderColor: const Color(0xFFBBF7D0),
+                          onTap: () => _applyPreset(
+                            ips1: 3.45, ambil1: 6, lulus1: 6,
+                            ips2: 3.60, ambil2: 6, lulus2: 6,
+                            ukt: 1,
+                          ),
+                        ),
+                        _buildPresetChip(
+                          label: 'Skenario Sedang',
+                          icon: Icons.warning_amber_rounded,
+                          color: const Color(0xFFD97706),
+                          bgColor: const Color(0xFFFFFBEB),
+                          borderColor: const Color(0xFFFDE68A),
+                          onTap: () => _applyPreset(
+                            ips1: 2.60, ambil1: 6, lulus1: 5,
+                            ips2: 2.40, ambil2: 6, lulus2: 4,
+                            ukt: 1,
+                          ),
+                        ),
+                        _buildPresetChip(
+                          label: 'Skenario Risiko Tinggi',
+                          icon: Icons.error_outline_rounded,
+                          color: const Color(0xFFDC2626),
+                          bgColor: const Color(0xFFFEF2F2),
+                          borderColor: const Color(0xFFFECACA),
+                          onTap: () => _applyPreset(
+                            ips1: 2.10, ambil1: 6, lulus1: 3,
+                            ips2: 1.80, ambil2: 6, lulus2: 2,
+                            ukt: 0,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+
               // ── Card: Identitas & Semester 1 ──────────────────────────
               Card(
                 child: Padding(
@@ -318,13 +555,13 @@ class _PredictionScreenState extends State<PredictionScreen> {
                             controller: _mkDiambilSem1Controller,
                             keyboardType: TextInputType.number,
                             decoration: const InputDecoration(
-                              labelText: 'Jumlah Matkul Diambil',
+                              labelText: 'Matkul Diambil',
                               hintText: '≥ 1',
-                              helperText: 'Bukan SKS (jml matkul)',
+                              helperText: 'Bukan SKS',
                               prefixIcon: Icon(Icons.book_outlined, size: 20),
                             ),
                             validator: (v) => _validateMatkul(v,
-                                label: 'Jumlah mata kuliah diambil Sem 1', min: 1),
+                                label: 'Matkul diambil Sem 1', min: 1),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -333,13 +570,13 @@ class _PredictionScreenState extends State<PredictionScreen> {
                             controller: _mkLulusSem1Controller,
                             keyboardType: TextInputType.number,
                             decoration: const InputDecoration(
-                              labelText: 'Jumlah Matkul Lulus',
+                              labelText: 'Matkul Lulus',
                               hintText: '≥ 0',
                               helperText: 'Bukan SKS',
                               prefixIcon: Icon(Icons.check_outlined, size: 20),
                             ),
                             validator: (v) => _validateMatkul(v,
-                                label: 'Jumlah mata kuliah lulus Sem 1', min: 0),
+                                label: 'Matkul lulus Sem 1', min: 0),
                           ),
                         ),
                       ]),
@@ -387,13 +624,13 @@ class _PredictionScreenState extends State<PredictionScreen> {
                             controller: _mkDiambilSem2Controller,
                             keyboardType: TextInputType.number,
                             decoration: const InputDecoration(
-                              labelText: 'Jumlah Matkul Diambil',
+                              labelText: 'Matkul Diambil',
                               hintText: '≥ 1',
-                              helperText: 'Bukan SKS (jml matkul)',
+                              helperText: 'Bukan SKS',
                               prefixIcon: Icon(Icons.book_outlined, size: 20),
                             ),
                             validator: (v) => _validateMatkul(v,
-                                label: 'Jumlah mata kuliah diambil Sem 2', min: 1),
+                                label: 'Matkul diambil Sem 2', min: 1),
                           ),
                         ),
                         const SizedBox(width: 12),
@@ -402,13 +639,13 @@ class _PredictionScreenState extends State<PredictionScreen> {
                             controller: _mkLulusSem2Controller,
                             keyboardType: TextInputType.number,
                             decoration: const InputDecoration(
-                              labelText: 'Jumlah Matkul Lulus',
+                              labelText: 'Matkul Lulus',
                               hintText: '≥ 0',
                               helperText: 'Bukan SKS',
                               prefixIcon: Icon(Icons.check_outlined, size: 20),
                             ),
                             validator: (v) => _validateMatkul(v,
-                                label: 'Jumlah mata kuliah lulus Sem 2', min: 0),
+                                label: 'Matkul lulus Sem 2', min: 0),
                           ),
                         ),
                       ]),
@@ -452,6 +689,107 @@ class _PredictionScreenState extends State<PredictionScreen> {
                           ),
                         ),
                       ]),
+                    ],
+                  ),
+                ),
+              ),
+
+              // ── Card: Pratinjau Real-Time 6 Fitur Rekayasa (Otomatis) ──
+              Card(
+                margin: const EdgeInsets.only(top: 14),
+                elevation: 0,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                  side: const BorderSide(color: Color(0xFFCBD5E1)),
+                ),
+                color: const Color(0xFFF8FAFC),
+                child: Padding(
+                  padding: const EdgeInsets.all(14.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(5),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E40AF).withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Icon(Icons.hub_outlined, color: Color(0xFF1E40AF), size: 16),
+                          ),
+                          const SizedBox(width: 8),
+                          const Expanded(
+                            child: Text(
+                              'Pratinjau Real-Time 6 Fitur Rekayasa (Otomatis)',
+                              style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Color(0xFF1E293B)),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF22C55E).withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                            ),
+                            child: const Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                CircleAvatar(radius: 3, backgroundColor: Color(0xFF16A34A)),
+                                SizedBox(width: 4),
+                                Text('LIVE', style: TextStyle(fontSize: 9, fontWeight: FontWeight.bold, color: Color(0xFF16A34A))),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildRealtimeStatItem(
+                              label: 'Rata-rata IPS',
+                              value: _liveAvgIps.toStringAsFixed(2),
+                              sublabel: 'Tahun Pertama',
+                              icon: Icons.school_outlined,
+                              color: const Color(0xFF1E40AF),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildRealtimeStatItem(
+                              label: 'Tren IPS (Δ)',
+                              value: _liveTrenIps > 0 ? '+${_liveTrenIps.toStringAsFixed(2)}' : _liveTrenIps.toStringAsFixed(2),
+                              sublabel: _liveTrenIps > 0 ? 'Meningkat' : (_liveTrenIps < 0 ? 'Menurun' : 'Stabil'),
+                              icon: _liveTrenIps >= 0 ? Icons.trending_up_rounded : Icons.trending_down_rounded,
+                              color: _liveTrenIps >= 0 ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _buildRealtimeStatItem(
+                              label: 'Rasio Lulus Sem 1',
+                              value: '$_liveRasio1%',
+                              sublabel: '$_liveGagal1 Matkul Gagal',
+                              icon: Icons.assessment_outlined,
+                              color: _liveGagal1 == 0 ? const Color(0xFF16A34A) : const Color(0xFFD97706),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _buildRealtimeStatItem(
+                              label: 'Rasio Lulus Sem 2',
+                              value: '$_liveRasio2%',
+                              sublabel: '$_liveGagal2 Matkul Gagal',
+                              icon: Icons.assessment_outlined,
+                              color: _liveGagal2 == 0 ? const Color(0xFF16A34A) : const Color(0xFFDC2626),
+                            ),
+                          ),
+                        ],
+                      ),
                     ],
                   ),
                 ),
