@@ -308,10 +308,10 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       color: const Color(0xFF3B82F6),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _buildMetricCard(
-                      title: 'Indikasi Risiko Rendah',
+                      title: 'Risiko Rendah',
                       count: _repo.rendahCount.toString(),
                       icon: Icons.check_circle_outline,
                       color: const Color(0xFF16A34A),
@@ -319,21 +319,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   ),
                 ],
               ),
-              const SizedBox(height: 10),
+              const SizedBox(height: 8),
               Row(
                 children: [
                   Expanded(
                     child: _buildMetricCard(
-                      title: 'Indikasi Risiko Sedang',
+                      title: 'Risiko Sedang',
                       count: _repo.sedangCount.toString(),
                       icon: Icons.warning_amber_rounded,
                       color: const Color(0xFFD97706),
                     ),
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: 8),
                   Expanded(
                     child: _buildMetricCard(
-                      title: 'Indikasi Risiko Tinggi',
+                      title: 'Risiko Tinggi',
                       count: _repo.tinggiCount.toString(),
                       icon: Icons.error_outline_rounded,
                       color: const Color(0xFFDC2626),
@@ -562,7 +562,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
             children: [
               Expanded(
                 child: _buildCollectiveStatItem(
-                  label: 'Rata-rata IPS Kolektif',
+                  label: 'Rata-rata IPS',
                   value: _avgIpsKolektif.toStringAsFixed(2),
                   icon: Icons.school_outlined,
                 ),
@@ -570,7 +570,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Container(width: 1, height: 32, color: const Color(0xFFE2E8F0)),
               Expanded(
                 child: _buildCollectiveStatItem(
-                  label: 'Rasio Lulus Kolektif',
+                  label: 'Rasio Lulus',
                   value: '$_rasioLulusKolektifPersen%',
                   icon: Icons.check_circle_outline,
                 ),
@@ -613,7 +613,9 @@ class _DashboardScreenState extends State<DashboardScreen> {
         Text(
           label,
           textAlign: TextAlign.center,
-          style: const TextStyle(fontSize: 10, color: Color(0xFF64748B)),
+          maxLines: 2,
+          softWrap: true,
+          style: const TextStyle(fontSize: 10, color: Color(0xFF64748B), height: 1.1),
         ),
       ],
     );
@@ -802,19 +804,24 @@ class _DashboardScreenState extends State<DashboardScreen> {
     required Color color,
   }) {
     return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+        side: const BorderSide(color: Color(0xFFE2E8F0)),
+      ),
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 12.0),
+        padding: const EdgeInsets.symmetric(horizontal: 8.0, vertical: 10.0),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(6),
               decoration: BoxDecoration(
                 color: color.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: color, size: 20),
+              child: Icon(icon, color: color, size: 18),
             ),
-            const SizedBox(width: 10),
+            const SizedBox(width: 8),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -825,13 +832,20 @@ class _DashboardScreenState extends State<DashboardScreen> {
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
                       color: color,
+                      height: 1.1,
                     ),
                   ),
+                  const SizedBox(height: 2),
                   Text(
                     title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: const TextStyle(fontSize: 11, color: Colors.black54),
+                    maxLines: 2,
+                    softWrap: true,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF475569),
+                      height: 1.15,
+                    ),
                   ),
                 ],
               ),

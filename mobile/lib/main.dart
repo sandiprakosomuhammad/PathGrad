@@ -66,132 +66,135 @@ class PrediksiKelulusanApp extends StatelessWidget {
         return Container(
           color: const Color(0xFFCBD5E1),
           alignment: Alignment.center,
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(vertical: 8),
           child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 412),
-            child: Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFF1E293B),
-                borderRadius: BorderRadius.circular(42),
-                border: Border.all(
+            constraints: const BoxConstraints(maxWidth: 350),
+            child: AspectRatio(
+              aspectRatio: 9 / 19.5,
+              child: Container(
+                decoration: BoxDecoration(
                   color: const Color(0xFF1E293B),
-                  width: 10,
+                  borderRadius: BorderRadius.circular(36),
+                  border: Border.all(
+                    color: const Color(0xFF1E293B),
+                    width: 8,
+                  ),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: Color(0x38000000),
+                      blurRadius: 30,
+                      spreadRadius: 2,
+                      offset: Offset(0, 10),
+                    ),
+                    BoxShadow(
+                      color: Color(0x1A000000),
+                      blurRadius: 10,
+                      offset: Offset(0, 4),
+                    ),
+                  ],
                 ),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x3D000000),
-                    blurRadius: 36,
-                    spreadRadius: 4,
-                    offset: Offset(0, 14),
-                  ),
-                  BoxShadow(
-                    color: Color(0x1F000000),
-                    blurRadius: 12,
-                    offset: Offset(0, 4),
-                  ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(32),
-                child: Container(
-                  color: const Color(0xFFF8FAFC),
-                  child: Column(
-                    children: [
-                      // ── Top Phone Status Bar (Tinggi 28px) ──
-                      Container(
-                        height: 28,
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        color: Colors.white,
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          crossAxisAlignment: CrossAxisAlignment.center,
-                          children: [
-                            // Jam 09:41
-                            const SizedBox(
-                              width: 44,
-                              child: Text(
-                                '09:41',
-                                style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w700,
-                                  color: Color(0xFF0F172A),
-                                  letterSpacing: -0.2,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(28),
+                  child: Container(
+                    color: const Color(0xFFF8FAFC),
+                    child: Column(
+                      children: [
+                        // ── Top Phone Status Bar (Tinggi 28px) ──
+                        Container(
+                          height: 28,
+                          padding: const EdgeInsets.symmetric(horizontal: 14),
+                          color: Colors.white,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              // Jam 09:41
+                              const SizedBox(
+                                width: 38,
+                                child: Text(
+                                  '09:41',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w700,
+                                    color: Color(0xFF0F172A),
+                                    letterSpacing: -0.2,
+                                  ),
                                 ),
                               ),
-                            ),
-                            // Dynamic Island / Camera Notch (90px x 18px)
-                            Container(
-                              width: 90,
-                              height: 18,
-                              decoration: BoxDecoration(
-                                color: Colors.black,
-                                borderRadius: BorderRadius.circular(9),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Container(
-                                    margin: const EdgeInsets.only(right: 8),
-                                    width: 7,
-                                    height: 7,
-                                    decoration: const BoxDecoration(
-                                      color: Color(0xFF1E293B),
-                                      shape: BoxShape.circle,
+                              // Dynamic Island / Camera Notch (72px x 15px)
+                              Container(
+                                width: 72,
+                                height: 15,
+                                decoration: BoxDecoration(
+                                  color: Colors.black,
+                                  borderRadius: BorderRadius.circular(7.5),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Container(
+                                      margin: const EdgeInsets.only(right: 6),
+                                      width: 5,
+                                      height: 5,
+                                      decoration: const BoxDecoration(
+                                        color: Color(0xFF1E293B),
+                                        shape: BoxShape.circle,
+                                      ),
                                     ),
-                                  ),
-                                ],
+                                  ],
+                                ),
                               ),
-                            ),
-                            // Sinyal, WiFi, Baterai
-                            const SizedBox(
-                              width: 52,
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.end,
-                                children: [
-                                  Icon(Icons.signal_cellular_alt_rounded, size: 13, color: Color(0xFF0F172A)),
-                                  SizedBox(width: 4),
-                                  Icon(Icons.wifi_rounded, size: 13, color: Color(0xFF0F172A)),
-                                  SizedBox(width: 4),
-                                  Icon(Icons.battery_full_rounded, size: 15, color: Color(0xFF0F172A)),
-                                ],
+                              // Sinyal, WiFi, Baterai
+                              const SizedBox(
+                                width: 48,
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.end,
+                                  children: [
+                                    Icon(Icons.signal_cellular_alt_rounded, size: 12, color: Color(0xFF0F172A)),
+                                    SizedBox(width: 3),
+                                    Icon(Icons.wifi_rounded, size: 12, color: Color(0xFF0F172A)),
+                                    SizedBox(width: 3),
+                                    Icon(Icons.battery_full_rounded, size: 14, color: Color(0xFF0F172A)),
+                                  ],
+                                ),
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-
-                      // ── App Screen Content ──
-                      Expanded(
-                        child: LayoutBuilder(
-                          builder: (ctx, constraints) {
-                            final media = MediaQuery.of(context);
-                            return MediaQuery(
-                              data: media.copyWith(
-                                size: Size(constraints.maxWidth, constraints.maxHeight),
-                                padding: EdgeInsets.zero,
-                                viewPadding: EdgeInsets.zero,
-                              ),
-                              child: child ?? const SizedBox(),
-                            );
-                          },
-                        ),
-                      ),
-
-                      // ── Bottom Home Indicator Bar (120px x 4px) ──
-                      Container(
-                        height: 16,
-                        color: Colors.white,
-                        alignment: Alignment.center,
-                        child: Container(
-                          width: 120,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF94A3B8),
-                            borderRadius: BorderRadius.circular(2),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
+
+                        // ── App Screen Content ──
+                        Expanded(
+                          child: LayoutBuilder(
+                            builder: (ctx, constraints) {
+                              final media = MediaQuery.of(context);
+                              return MediaQuery(
+                                data: media.copyWith(
+                                  size: Size(constraints.maxWidth, constraints.maxHeight),
+                                  padding: EdgeInsets.zero,
+                                  viewPadding: EdgeInsets.zero,
+                                ),
+                                child: child ?? const SizedBox(),
+                              );
+                            },
+                          ),
+                        ),
+
+                        // ── Bottom Home Indicator Bar (100px x 4px) ──
+                        Container(
+                          height: 16,
+                          color: Colors.white,
+                          alignment: Alignment.center,
+                          child: Container(
+                            width: 100,
+                            height: 4,
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF94A3B8),
+                              borderRadius: BorderRadius.circular(2),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
