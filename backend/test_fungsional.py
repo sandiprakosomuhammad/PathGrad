@@ -7,10 +7,23 @@ import os
 import sys
 
 import pandas as pd
-from fastapi.testclient import TestClient
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from app.main import app  # noqa: E402
+
+# Opsional: uji API yang sedang berjalan (mis. di Docker) lewat HTTP.
+#   PowerShell:  $env:PATHGRAD_URL="http://localhost:8000"; python test_fungsional.py
+BASE_URL = os.environ.get("PATHGRAD_URL")
+
+
+def buat_client():
+    if BASE_URL:
+        import httpx
+        print(f"[Mode HTTP] menguji {BASE_URL}")
+        return httpx.Client(base_url=BASE_URL, timeout=30)
+    from fastapi.testclient import TestClient
+    from app.main import app
+    print("[Mode TestClient] menguji aplikasi langsung (tanpa Docker)")
+    return TestClient(app)
 
 BASE = {
     "kode_anonim": "UJI-FUNGSIONAL",
@@ -61,7 +74,7 @@ KASUS = [
 
 
 def main():
-    client = TestClient(app)
+    client = buat_client()
     baris = []
     for nama, jenis, payload, harapan in KASUS:
         r = client.post("/api/predict", json=payload)
@@ -74,12 +87,22 @@ def main():
                       "hasil": r.status_code, "keluaran": ringkas,
                       "lolos": "Ya" if ok else "TIDAK"})
 
-    # endpoint pendukung
-    for path in ("/", "/api/health"):
+    # endpoint pendukung (hanya membaca, tidak menulis ke database)
+    for path in ("/", "/api/health", "/api/history"):
         r = client.get(path)
+        ok = r.status_code == 200
+        ket = ""
+        if path == "/api/history" and ok:
+            b = r.json()
+            kunci = ("total_mahasiswa", "total_rendah", "total_sedang",
+                     "total_tinggi", "records")
+            ok = all(k in b for k in kunci) and (
+                b["total_mahasiswa"] == len(b["records"])
+                == b["total_rendah"] + b["total_sedang"] + b["total_tinggi"])
+            ket = f"{b.get('total_mahasiswa', '?')} mahasiswa"
         baris.append({"kasus": f"GET {path}", "jenis": "Endpoint", "harapan": 200,
-                      "hasil": r.status_code, "keluaran": "",
-                      "lolos": "Ya" if r.status_code == 200 else "TIDAK"})
+                      "hasil": r.status_code, "keluaran": ket,
+                      "lolos": "Ya" if ok else "TIDAK"})
 
     df = pd.DataFrame(baris)
     df.to_csv("hasil_fungsional.csv", index=False)

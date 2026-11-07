@@ -19,3 +19,4 @@ Field ips_sem1 hilang,Tidak valid,422,422,,Ya
 Field ukt_lancar hilang,Tidak valid,422,422,,Ya
 GET /,Endpoint,200,200,,Ya
 GET /api/health,Endpoint,200,200,,Ya
+GET /api/history,Endpoint,200,200,17 mahasiswa,Ya
